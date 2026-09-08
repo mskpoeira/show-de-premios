@@ -1,0 +1,38 @@
+{
+  "name": "Show de Prêmios — Retiro Oficial",
+  "short_name": "Show de Prêmios",
+  "description": "Sistema Oficial de Gerenciamento de Vendas, Caixa, Locução e Telão do Show de Prêmios",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#1e1b4b",
+  "icons": [
+    {
+      "src": "/assets/icons/icon.svg",
+      "sizes": "512x512 192x192 128x128 64x64",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Módulo do Locutor",
+      "short_name": "Locutor",
+      "url": "/locutor",
+      "description": "Painel de sorteio e cantoria de pedras"
+    },
+    {
+      "name": "Telão Oficial",
+      "short_name": "Telão",
+      "url": "/telao",
+      "description": "Telão em tempo real para o público"
+    },
+    {
+      "name": "Caixa do Dia",
+      "short_name": "Caixa",
+      "url": "/caixa",
+      "description": "Controle de entradas e saídas de caixa"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bgGrad)" />
+  <circle cx="256" cy="256" r="210" fill="none" stroke="url(#goldGrad)" stroke-width="12" stroke-dasharray="16 10" />
+  <!-- Troféu Central -->
+  <path d="M160 140 H352 V230 C352 285 308 330 256 330 C204 330 160 285 160 230 Z" fill="url(#goldGrad)" />
+  <!-- Alça Esquerda -->
+  <path d="M160 160 H120 C100 160 85 175 85 195 C85 235 115 255 160 255" fill="none" stroke="url(#goldGrad)" stroke-width="18" stroke-linecap="round" />
+  <!-- Alça Direita -->
+  <path d="M352 160 H392 C412 160 427 175 427 195 C427 235 397 255 352 255" fill="none" stroke="url(#goldGrad)" stroke-width="18" stroke-linecap="round" />
+  <!-- Base do Troféu -->
+  <rect x="236" y="330" width="40" height="60" fill="url(#goldGrad)" />
+  <rect x="180" y="390" width="152" height="30" rx="10" fill="url(#goldGrad)" />
+  <!-- Estrela de Destaque -->
+  <polygon points="256,180 266,208 296,208 272,225 281,252 256,236 231,252 240,225 216,208 246,208" fill="#ffffff" />
+</svg>

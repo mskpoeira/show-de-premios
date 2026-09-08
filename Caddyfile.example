@@ -1,0 +1,55 @@
+﻿# =============================================================================
+# CADDYFILE — SHOW DE PRÊMIOS (PRODUÇÃO INDEPENDENTE)
+# Domínio: showdepremios.mskpoeira.com.br
+# Diretório: /var/www/show-de-premios
+# Isolado do SGR (sgr.mskpoeira.com.br)
+# =============================================================================
+
+showdepremios.mskpoeira.com.br {
+    root * /var/www/show-de-premios
+
+    # Front Controller em PHP
+    php_fastcgi unix//run/php/php8.2-fpm.sock {
+        index index.php
+    }
+
+    file_server
+    encode zstd gzip
+
+    # Proteção de Arquivos Sensíveis
+    @sensitive {
+        path /.env*
+        path /.git*
+        path /app/*
+        path /config/*
+        path /database/*
+        path /storage/*
+        path /tests/*
+        path /docs/*
+    }
+    respond @sensitive 403
+
+    # Cache de Assets Estáticos
+    @static {
+        path /assets/*
+        path /public/assets/*
+        path *.css *.js *.png *.jpg *.jpeg *.svg *.ico *.woff2 *.mp3
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # Headers de Segurança
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    }
+
+    # Logs de Acesso e Erro Isolados
+    log {
+        output file /var/log/caddy/showdepremios_access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}

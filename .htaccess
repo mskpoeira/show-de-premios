@@ -1,0 +1,27 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block sensitive files and directories
+    RewriteRule ^(\.env|\.git|app|database|storage|tests) - [F,L,NC]
+
+    # Serve static assets from public if present
+    RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+    RewriteRule ^showdepremios/assets/(.*)$ public/assets/$1 [L]
+    RewriteRule ^(manifest\.json|sw\.js|favicon\.ico)$ public/$1 [L]
+    RewriteRule ^showdepremios/(manifest\.json|sw\.js|favicon\.ico)$ public/$1 [L]
+
+    # Route all other requests to front controller
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Security Options
+Options -Indexes
+ServerSignature Off
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

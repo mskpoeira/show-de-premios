@@ -1,0 +1,33 @@
+﻿# Environment variables
+.env
+.env.*
+!.env.example
+
+# SQLite Database & Storage
+storage/*.sqlite
+storage/*.sqlite-shm
+storage/*.sqlite-wal
+storage/backups/*
+!storage/backups/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+
+# Dependencies & Composer
+/vendor/
+/node_modules/
+
+# Logs & Caches
+*.log
+*.bak
+.cache/
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.suo
+*.user
