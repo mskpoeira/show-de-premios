@@ -12,6 +12,7 @@ $statusStyles = [
     'CLOSED' => ['bg' => '#475569', 'text' => '🔒 RODADA FECHADA'],
 ];
 $activeStatusStyle = $statusStyles[$currentStatus] ?? ['bg' => '#64748b', 'text' => $currentStatus];
+$isOpen = isset($isOpen) ? (bool)$isOpen : (($currentStatus !== 'CLOSED') && (($round['day_status'] ?? 'OPEN') === 'OPEN' || Auth::isAdmin()));
 ?>
 
 <div class="page-header" style="flex-wrap: wrap; gap: 1rem;">
@@ -137,6 +138,7 @@ $activeStatusStyle = $statusStyles[$currentStatus] ?? ['bg' => '#64748b', 'text'
 <form method="POST" action="<?= View::url('rodadas/salvar-vendas') ?>" id="salesForm">
     <?= Csrf::inputField() ?>
     <input type="hidden" name="round_id" value="<?= $round['id'] ?>">
+    <input type="hidden" name="status" value="<?= View::e($round['status']) ?>">
 
     <!-- Round Header Configuration -->
     <div class="card" style="border-top: 4px solid #f59e0b;">
@@ -217,9 +219,16 @@ $activeStatusStyle = $statusStyles[$currentStatus] ?? ['bg' => '#64748b', 'text'
                     💡 <strong>Lançamento Direto:</strong> Você pode digitar diretamente o valor em R$ e usar os atalhos. A quantidade de cartelas pode ser ignorada.
                 </p>
             </div>
-            <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-muted);">
-                Pressione <kbd>Enter</kbd> para avançar
-            </span>
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <?php if ($isOpen): ?>
+                    <button type="button" class="btn btn-sm btn-success" onclick="openQuickAddSellerModal()" style="font-weight: 700;">
+                        + Novo(a) Vendedor(a)
+                    </button>
+                <?php endif; ?>
+                <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-muted);">
+                    Pressione <kbd>Enter</kbd> para avançar
+                </span>
+            </div>
         </div>
 
         <?php if (empty($sellers)): ?>
@@ -304,10 +313,15 @@ $activeStatusStyle = $statusStyles[$currentStatus] ?? ['bg' => '#64748b', 'text'
             </div>
 
             <?php if ($isOpen): ?>
-                <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary" style="font-size: 1.05rem; padding: 0.75rem 1.5rem;">
-                        💾 Salvar Vendas e Premiações da Rodada
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="openQuickAddSellerModal()">
+                        👤 + Cadastrar Novo(a) Vendedor(a)
                     </button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button type="submit" class="btn btn-primary" style="font-size: 1.05rem; padding: 0.75rem 1.5rem; font-weight: 800; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);">
+                            💾 Salvar Vendas dos Vendedores
+                        </button>
+                    </div>
                 </div>
             <?php endif; ?>
         <?php endif; ?>
@@ -423,6 +437,35 @@ $activeStatusStyle = $statusStyles[$currentStatus] ?? ['bg' => '#64748b', 'text'
     </div>
 </form>
 
+<!-- Modal Cadastro Rápido de Vendedor(a) -->
+<div id="quickAddSellerModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="background: #ffffff; border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); overflow: hidden;">
+        <div style="padding: 1.25rem 1.5rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 800;">👤 Adicionar Novo(a) Vendedor(a)</h3>
+            <button type="button" onclick="closeQuickAddSellerModal()" style="background: transparent; border: none; font-size: 1.5rem; line-height: 1; color: #64748b; cursor: pointer;">&times;</button>
+        </div>
+        <form method="POST" action="<?= View::url('vendedores/criar') ?>" style="padding: 1.5rem; margin-bottom: 0;">
+            <?= Csrf::inputField() ?>
+            <input type="hidden" name="redirect" value="<?= View::url('rodada?id=' . $round['id']) ?>">
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label" for="quick_seller_name" style="font-weight: 700;">Nome Completo do Vendedor(a) *</label>
+                <input type="text" id="quick_seller_name" name="name" class="form-control" required placeholder="Ex: Lucas Gabriel, Maria Silva">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label" for="quick_seller_nickname" style="font-weight: 700;">Apelido / Ponto de Venda (Opcional)</label>
+                <input type="text" id="quick_seller_nickname" name="nickname" class="form-control" placeholder="Ex: Barraca da Frente, Luquinhas">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeQuickAddSellerModal()">Cancelar</button>
+                <button type="submit" class="btn btn-success" style="font-weight: 800;">+ Cadastrar e Atualizar Rodada</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Suggestion for Next Round Highlight -->
 <div class="card" style="border-left: 4px solid var(--primary); background: #f8fafc;">
     <div class="card-title">💡 Sugestão para a Próxima Rodada</div>
@@ -500,15 +543,32 @@ const pricingConfig = {
 };
 
 function parseBrl(str) {
-    if (!str) return 0;
+    if (!str && str !== 0) return 0;
     if (typeof str === 'number') return str;
-    const cleaned = String(str).replace(/[^\d,\.-]/g, '').replace(/\./g, '').replace(',', '.');
+    let s = String(str).trim();
+    if (s.includes(',')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    }
+    const cleaned = s.replace(/[^\d.-]/g, '');
     const val = parseFloat(cleaned);
     return isNaN(val) ? 0 : val;
 }
 
 function formatBrl(num) {
     return (num || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function openQuickAddSellerModal() {
+    const modal = document.getElementById('quickAddSellerModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => document.getElementById('quick_seller_name')?.focus(), 50);
+    }
+}
+
+function closeQuickAddSellerModal() {
+    const modal = document.getElementById('quickAddSellerModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function selectColor(colorName) {

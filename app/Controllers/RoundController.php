@@ -88,9 +88,13 @@ class RoundController
             ];
         }
 
+        $currentStatus = $round['status'] ?? 'OPEN';
+        $isOpen = ($currentStatus !== 'CLOSED') && (($round['day_status'] ?? 'OPEN') === 'OPEN' || Auth::isAdmin());
+
         View::render('rounds/operate', [
             'title' => "Rodada {$round['round_number']} — " . View::date($round['operation_date']),
             'round' => $round,
+            'isOpen' => $isOpen,
             'sellers' => $sellers,
             'totalSales' => $totalSales,
             'totalQty' => $totalQty,
@@ -239,28 +243,34 @@ class RoundController
         if ($prizesCount < 1) $prizesCount = 1;
         if ($prizesCount > 3) $prizesCount = 3;
 
+        $parseMoney = function($raw): ?float {
+            if ($raw === null || $raw === '') return null;
+            if (is_numeric($raw)) return (float)$raw;
+            $s = trim((string)$raw);
+            $s = str_replace(['R$', ' '], '', $s);
+            if (str_contains($s, ',')) {
+                $s = str_replace('.', '', $s);
+                $s = str_replace(',', '.', $s);
+            }
+            $clean = preg_replace('/[^\d.-]/', '', $s);
+            return (is_numeric($clean)) ? (float)$clean : null;
+        };
+
         // Process Prize 1 (pode ser texto/nome ou valor numérico)
         $p1Raw = trim($_POST['prize_1'] ?? '');
         $p1Title = trim($_POST['prize_1_title'] ?? '');
-        $p1Amount = 0.00;
-        if (!empty($p1Raw)) {
-            $cleaned = str_replace(',', '.', str_replace(['R$', ' ', '.'], '', $p1Raw));
-            if (is_numeric($cleaned)) {
-                $p1Amount = (float)$cleaned;
-            } elseif (empty($p1Title)) {
-                $p1Title = $p1Raw;
-            }
+        $p1Amount = $parseMoney($p1Raw) ?? 0.00;
+        if ($p1Amount <= 0 && !empty($p1Raw) && empty($p1Title)) {
+            $p1Title = $p1Raw;
         }
 
         // Process Prize 2
         $p2Raw = trim($_POST['prize_2'] ?? '');
         $p2Title = trim($_POST['prize_2_title'] ?? '');
         $p2Amount = 0.00;
-        if ($prizesCount >= 2 && !empty($p2Raw)) {
-            $cleaned = str_replace(',', '.', str_replace(['R$', ' ', '.'], '', $p2Raw));
-            if (is_numeric($cleaned)) {
-                $p2Amount = (float)$cleaned;
-            } elseif (empty($p2Title)) {
+        if ($prizesCount >= 2) {
+            $p2Amount = $parseMoney($p2Raw) ?? 0.00;
+            if ($p2Amount <= 0 && !empty($p2Raw) && empty($p2Title)) {
                 $p2Title = $p2Raw;
             }
         }
@@ -269,11 +279,9 @@ class RoundController
         $p3Raw = trim($_POST['prize_3'] ?? '');
         $p3Title = trim($_POST['prize_3_title'] ?? '');
         $p3Amount = 0.00;
-        if ($prizesCount >= 3 && !empty($p3Raw)) {
-            $cleaned = str_replace(',', '.', str_replace(['R$', ' ', '.'], '', $p3Raw));
-            if (is_numeric($cleaned)) {
-                $p3Amount = (float)$cleaned;
-            } elseif (empty($p3Title)) {
+        if ($prizesCount >= 3) {
+            $p3Amount = $parseMoney($p3Raw) ?? 0.00;
+            if ($p3Amount <= 0 && !empty($p3Raw) && empty($p3Title)) {
                 $p3Title = $p3Raw;
             }
         }
@@ -309,9 +317,13 @@ class RoundController
             JOIN operation_days d ON d.id = r.operation_day_id 
             WHERE r.id = ?
         ");
+        $stmt->execute([$roundId]);
         $round = $stmt->fetch();
 
-        if (!$round || !in_array($round['status'], ['OPEN', 'IN_PROGRESS']) || $round['day_status'] !== 'OPEN') {
+        $allowedStatuses = ['OPEN', 'IN_PROGRESS', 'PAUSED', 'CHECKING'];
+        $isDayOpen = ($round['day_status'] ?? 'OPEN') === 'OPEN' || Auth::isAdmin();
+
+        if (!$round || !in_array($round['status'], $allowedStatuses, true) || !$isDayOpen) {
             Response::redirect('/rodada?id=' . $roundId, null, 'Esta rodada não está aberta para edição.');
         }
 
@@ -320,9 +332,9 @@ class RoundController
         $roundBundleQtyRaw = trim($_POST['bundle_quantity'] ?? '');
         $roundBundlePriceRaw = trim($_POST['bundle_price'] ?? '');
 
-        $roundSinglePrice = !empty($roundSinglePriceRaw) ? (float)str_replace(',', '.', str_replace(['R$', ' ', '.'], '', $roundSinglePriceRaw)) : null;
+        $roundSinglePrice = $parseMoney($roundSinglePriceRaw);
         $roundBundleQty = !empty($roundBundleQtyRaw) ? (int)$roundBundleQtyRaw : null;
-        $roundBundlePrice = !empty($roundBundlePriceRaw) ? (float)str_replace(',', '.', str_replace(['R$', ' ', '.'], '', $roundBundlePriceRaw)) : null;
+        $roundBundlePrice = $parseMoney($roundBundlePriceRaw);
 
         $pricingRule = PricingService::getRuleForDate($round['operation_date']);
         if ($roundSinglePrice !== null && $roundSinglePrice > 0) {
@@ -336,14 +348,21 @@ class RoundController
         }
         $singlePrice = (float)($pricingRule['single_price'] ?? 2.00);
 
+        // Define status final: preserva o status atual da rodada ou aceita o status solicitado
+        $requestedStatus = trim($_POST['status'] ?? '');
+        $finalStatus = in_array($requestedStatus, $allowedStatuses, true) ? $requestedStatus : $round['status'];
+        if (!in_array($finalStatus, $allowedStatuses, true)) {
+            $finalStatus = 'OPEN';
+        }
+
         $pdo->beginTransaction();
 
         try {
-            // Atualizar cabeçalho da rodada, premiações, títulos, ganhadores, vendedores e mudar status para IN_PROGRESS
+            // Atualizar cabeçalho da rodada, premiações, títulos, ganhadores, vendedores e mudar status
             $finalRoundNumber = $roundNumber > 0 ? $roundNumber : (int)$round['round_number'];
             $stmtUpRound = $pdo->prepare("
                 UPDATE rounds SET 
-                    status = 'IN_PROGRESS',
+                    status = ?,
                     round_number = ?,
                     round_name = ?,
                     card_color = ?,
@@ -367,6 +386,7 @@ class RoundController
                 WHERE id = ?
             ");
             $stmtUpRound->execute([
+                $finalStatus,
                 $finalRoundNumber,
                 $roundName ?: null,
                 $cardColor ?: ($round['card_color'] ?? 'Amarela'),
@@ -405,7 +425,7 @@ class RoundController
                 if ($sellerId <= 0) continue;
 
                 $amtRaw = $amounts[$sellerId] ?? '';
-                $parsedAmt = (float)str_replace(',', '.', str_replace(['R$', ' ', '.'], '', (string)$amtRaw));
+                $parsedAmt = $parseMoney($amtRaw) ?? 0.00;
                 $qty = isset($quantities[$sellerId]) ? (int)$quantities[$sellerId] : 0;
                 if ($qty < 0) $qty = 0;
 
@@ -455,7 +475,7 @@ class RoundController
 
             AuditService::log('ROUND_SALES_SAVE', 'rounds', $roundId, null, [
                 'round_number' => $finalRoundNumber,
-                'status' => 'IN_PROGRESS',
+                'status' => $finalStatus,
                 'prizes_count' => $prizesCount,
                 'prize_1' => $p1Amount,
                 'prize_1_title' => $p1Title,
@@ -467,6 +487,15 @@ class RoundController
                 'seller_2_name' => $seller2Name,
             ]);
 
+            $statusText = match($finalStatus) {
+                'OPEN' => 'Rodada aberta (vendas ativas)',
+                'IN_PROGRESS' => 'Rodada em andamento (cantoria)',
+                'PAUSED' => 'Rodada pausada',
+                'CHECKING' => 'Rodada em conferência',
+                default => $finalStatus
+            };
+            $successMsg = "Vendas e premiações da Rodada {$finalRoundNumber} salvas com sucesso! ({$statusText})";
+
             $isJson = (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'))
                    || (!empty($_SERVER['CONTENT_TYPE']) && str_contains($_SERVER['CONTENT_TYPE'], 'application/json'))
                    || isset($_POST['_ajax']) || isset($_GET['_ajax']);
@@ -475,14 +504,14 @@ class RoundController
                 header('Content-Type: application/json; charset=utf-8');
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Vendas e premiações salvas com sucesso! Rodada em andamento.',
+                    'message' => $successMsg,
                     'round_id' => $roundId,
-                    'status' => 'IN_PROGRESS'
+                    'status' => $finalStatus
                 ]);
                 exit;
             }
 
-            Response::redirect('/rodada?id=' . $roundId, 'Vendas, prêmios e ganhadores salvos com sucesso! Rodada em andamento.');
+            Response::redirect('/rodada?id=' . $roundId, $successMsg);
         } catch (\Throwable $e) {
             $pdo->rollBack();
             if (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')) {

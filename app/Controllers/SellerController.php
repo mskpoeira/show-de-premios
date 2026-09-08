@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Auth;
 use App\Core\Database;
 use App\Core\Response;
 use App\Core\View;
@@ -36,8 +37,11 @@ class SellerController
         $nickname = trim($_POST['nickname'] ?? '');
         $notes = trim($_POST['notes'] ?? '');
 
+        $redirect = trim($_POST['redirect'] ?? '');
+        $fallbackUrl = !empty($redirect) ? $redirect : '/configuracoes?tab=vendedores';
+
         if (empty($name)) {
-            Response::redirect('/configuracoes?tab=vendedores', null, 'O nome do vendedor(a) é obrigatório.');
+            Response::redirect($fallbackUrl, null, 'O nome do vendedor(a) é obrigatório.');
         }
 
         $pdo = Database::getConnection();
@@ -50,11 +54,15 @@ class SellerController
 
         AuditService::log('SELLER_CREATE', 'sellers', $sellerId, null, ['name' => $name]);
 
-        Response::redirect('/configuracoes?tab=vendedores', "Vendedor(a) '{$name}' cadastrado(a) com sucesso!");
+        Response::redirect($fallbackUrl, "Vendedor(a) '{$name}' cadastrado(a) com sucesso!");
     }
 
     public function toggleStatus(): void
     {
+        if (!Auth::isAdmin()) {
+            Response::redirect('/configuracoes?tab=vendedores', null, 'Permissão negada: Somente administradores podem inativar ou reativar vendedores.');
+        }
+
         $sellerId = (int)($_POST['seller_id'] ?? 0);
 
         $pdo = Database::getConnection();
@@ -81,6 +89,10 @@ class SellerController
 
     public function update(): void
     {
+        if (!Auth::isAdmin()) {
+            Response::redirect('/configuracoes?tab=vendedores', null, 'Permissão negada: Somente administradores podem alterar o cadastro de vendedores.');
+        }
+
         $sellerId = (int)($_POST['seller_id'] ?? 0);
         $name = trim($_POST['name'] ?? '');
         $nickname = trim($_POST['nickname'] ?? '');
