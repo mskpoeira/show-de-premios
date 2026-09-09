@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core;
+namespace AppCore;
 
 use PDO;
 
@@ -31,7 +31,7 @@ class Auth
             Session::set('user_id', $user['id']);
             Session::set('user_name', $user['name']);
             Session::set('user_login', $user['login']);
-            Session::set('user_role', $user['role']);
+            Session::set('user_role', strtoupper($user['role']));
             return true;
         }
 
@@ -63,66 +63,93 @@ class Auth
 
     public static function role(): string
     {
-        return Session::get('user_role', 'VIEWER');
+        return strtoupper((string)Session::get('user_role', 'CONSULTA'));
     }
 
-    public static function isAdmin(): bool
+    /**
+     * MASTER: controle completo irrestrito
+     */
+    public static function isMaster(): bool
     {
-        return self::role() === 'ADMIN';
+        $role = self::role();
+        $login = strtolower((string)Session::get('user_login', ''));
+        return $role === 'MASTER' || $login === 'tcardozo' || ($login === 'admin' && in_array($role, ['MASTER', 'ADMIN'], true));
     }
 
     public static function isMasterAdmin(): bool
     {
-        $login = strtolower((string)Session::get('user_login', ''));
-        return $login === 'tcardozo' || ($login === 'admin' && self::isAdmin());
+        return self::isMaster();
+    }
+
+    /**
+     * ADMINISTRADOR: operação administrativa geral
+     */
+    public static function isAdmin(): bool
+    {
+        return in_array(self::role(), ['MASTER', 'ADMIN', 'ADMINISTRADOR'], true) || self::isMaster();
+    }
+
+    /**
+     * CAIXA: vendas, compradores, pagamentos, cartelas, validação e conferência
+     */
+    public static function isCaixa(): bool
+    {
+        return in_array(self::role(), ['MASTER', 'ADMIN', 'ADMINISTRADOR', 'CAIXA', 'OPERATOR'], true);
+    }
+
+    /**
+     * CONSULTA: somente leitura autorizada
+     */
+    public static function isConsulta(): bool
+    {
+        return self::role() === 'CONSULTA';
     }
 
     public static function isOperator(): bool
     {
-        return in_array(self::role(), ['ADMIN', 'OPERATOR', 'GERENTE_EVENTO', 'GERENTE_FINANCEIRO', 'CAIXA'], true);
-    }
-
-    public static function isEventManager(): bool
-    {
-        return in_array(self::role(), ['ADMIN', 'GERENTE_EVENTO'], true);
-    }
-
-    public static function isFinancialManager(): bool
-    {
-        return in_array(self::role(), ['ADMIN', 'GERENTE_FINANCEIRO'], true);
-    }
-
-    public static function isCashier(): bool
-    {
-        return in_array(self::role(), ['ADMIN', 'GERENTE_FINANCEIRO', 'CAIXA'], true);
+        return self::isCaixa();
     }
 
     public static function canManageUsers(): bool
     {
-        return in_array(self::role(), ['ADMIN', 'GERENTE_EVENTO', 'GERENTE_FINANCEIRO'], true);
+        return self::isAdmin();
+    }
+
+    public static function canManageSettings(): bool
+    {
+        return self::isAdmin();
+    }
+
+    public static function canViewAudit(): bool
+    {
+        return self::isAdmin();
+    }
+
+    public static function canBackup(): bool
+    {
+        return self::isMaster();
     }
 
     public static function roleLabel(?string $role = null): string
     {
-        $role = $role ?: self::role();
+        $role = strtoupper($role ?: self::role());
         return match ($role) {
-            'ADMIN' => '🛡️ Administrador Master',
-            'GERENTE_EVENTO' => '🎪 Gerente do Evento',
-            'GERENTE_FINANCEIRO' => '💼 Gerente Financeiro',
-            'CAIXA' => '💵 Operador de Caixa',
-            'OPERATOR' => '⚙️ Operador Geral',
-            default => '👁️ Visualizador',
+            'MASTER' => '👑 MASTER',
+            'ADMIN', 'ADMINISTRADOR' => '🛡️ ADMINISTRADOR',
+            'CAIXA', 'OPERATOR' => '💵 CAIXA',
+            'CONSULTA' => '👁️ CONSULTA',
+            default => '👤 ' . $role,
         };
     }
 
     public static function roleBadgeColor(?string $role = null): string
     {
-        $role = $role ?: self::role();
+        $role = strtoupper($role ?: self::role());
         return match ($role) {
-            'ADMIN' => 'background: #4f46e5; color: #ffffff;',
-            'GERENTE_EVENTO' => 'background: #0284c7; color: #ffffff;',
-            'GERENTE_FINANCEIRO' => 'background: #059669; color: #ffffff;',
-            'CAIXA' => 'background: #d97706; color: #ffffff;',
+            'MASTER' => 'background: #0f766e; color: #ffffff;',
+            'ADMIN', 'ADMINISTRADOR' => 'background: #0284c7; color: #ffffff;',
+            'CAIXA', 'OPERATOR' => 'background: #d97706; color: #ffffff;',
+            'CONSULTA' => 'background: #64748b; color: #ffffff;',
             default => 'background: #475569; color: #ffffff;',
         };
     }

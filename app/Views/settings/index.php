@@ -44,6 +44,115 @@ $tab = $tab ?? 'gerais';
 <!-- ========================================================================= -->
 <!-- SUB-ABA 1: GERAIS & PREÇOS -->
 <!-- ========================================================================= -->
+
+<!-- ========================================================================= -->
+<!-- SUB-ABA: PLANEJAMENTO DO SHOW DE PRÊMIOS & PREMIAÇÃO -->
+<!-- ========================================================================= -->
+<?php if ($tab === 'planejamento'): ?>
+    <div class="card" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.75rem; margin-bottom: 1.5rem;">
+        <div class="card-title" style="font-size: 1.25rem; font-weight: 800; color: #0284c7; margin-bottom: 0.5rem;">
+            🎪 Planejamento Oficial do Show de Prêmios
+        </div>
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Configure todos os parâmetros do evento antes do início das vendas. Conforme a regra de integridade operacional, alterações estruturais críticas (como prefixo e grade) são bloqueadas automaticamente após a emissão da primeira cartela.
+        </p>
+
+        <?php if ($event): ?>
+            <form action="/configuracoes/planejamento" method="POST">
+                <?= Csrf::inputField() ?>
+                <input type="hidden" name="event_id" value="<?= (int)$event['id'] ?>">
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Evento *</label>
+                        <input type="text" name="name" class="form-control" required value="<?= View::e($event['name']) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Data do Evento *</label>
+                        <input type="date" name="event_date" class="form-control" required value="<?= View::e($event['event_date']) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Horário de Início *</label>
+                        <input type="text" name="event_time" class="form-control" required value="<?= View::e($event['event_time']) ?>" placeholder="20:00">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div class="form-group">
+                        <label class="form-label">Local do Evento *</label>
+                        <input type="text" name="location" class="form-control" required value="<?= View::e($event['location']) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prefixo das Cartelas * (3 letras)</label>
+                        <input type="text" name="ticket_prefix" class="form-control" required maxlength="3" value="<?= View::e($event['ticket_prefix']) ?>" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Regra de Empate *</label>
+                        <select name="tie_rule" class="form-control">
+                            <option value="SPLIT" <?= $event['tie_rule'] === 'SPLIT' ? 'selected' : '' ?>>Dividir o Prêmio</option>
+                            <option value="TIEBREAKER" <?= $event['tie_rule'] === 'TIEBREAKER' ? 'selected' : '' ?>>Desempate por Rodada Extra</option>
+                            <option value="NEW_ROUND" <?= $event['tie_rule'] === 'NEW_ROUND' ? 'selected' : '' ?>>Nova Rodada</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div class="form-group">
+                        <label class="form-label">Preço Individual (1 Cartela) *</label>
+                        <input type="number" step="0.01" name="single_price" class="form-control" required value="<?= (float)$event['single_price'] ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Qtd. Pacote Promocional *</label>
+                        <input type="number" name="bundle_qty" class="form-control" required value="<?= (int)$event['bundle_qty'] ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Preço do Pacote *</label>
+                        <input type="number" step="0.01" name="bundle_price" class="form-control" required value="<?= (float)$event['bundle_price'] ?>">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="background: #0284c7; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer;">
+                    💾 Salvar Configurações do Evento
+                </button>
+            </form>
+        <?php endif; ?>
+    </div>
+
+    <!-- Lista de Prêmios do Evento -->
+    <div class="card" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.75rem; margin-bottom: 1.5rem;">
+        <h3 style="margin-top: 0; font-size: 1.15rem; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem;">
+            🏆 Prêmios Cadastrados (Até 10 Prêmios Configuráveis)
+        </h3>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
+            <thead>
+                <tr style="background: #f1f5f9; color: #475569;">
+                    <th style="padding: 0.6rem 1rem;">Ordem</th>
+                    <th style="padding: 0.6rem 1rem;">Título</th>
+                    <th style="padding: 0.6rem 1rem;">Descrição</th>
+                    <th style="padding: 0.6rem 1rem;">Valor Estimado</th>
+                    <th style="padding: 0.6rem 1rem;">Regra de Vitória</th>
+                    <th style="padding: 0.6rem 1rem;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($prizes as $pz): ?>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.6rem 1rem; font-weight: 700; color: #0284c7;"><?= (int)$pz['order_num'] ?>º</td>
+                        <td style="padding: 0.6rem 1rem; font-weight: 600;"><?= View::e($pz['title']) ?></td>
+                        <td style="padding: 0.6rem 1rem; color: #64748b;"><?= View::e($pz['description']) ?></td>
+                        <td style="padding: 0.6rem 1rem; font-weight: 700; color: #16a34a;"><?= View::money($pz['value']) ?></td>
+                        <td style="padding: 0.6rem 1rem;"><code><?= View::e($pz['victory_rule']) ?></code></td>
+                        <td style="padding: 0.6rem 1rem;">
+                            <span style="background: #dcfce7; color: #15803d; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.8rem;">ATIVO</span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+<?php endif; ?>
+
 <?php if ($tab === 'gerais'): ?>
 
     <!-- Regras de Preços Section -->

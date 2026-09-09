@@ -113,7 +113,11 @@ header('X-Robots-Tag: noindex, nofollow');
 // Start Session
 \App\Core\Session::start();
 
-use App\Controllers\AuthController;
+use AppControllersOnlineSalesController;
+use AppControllersValidationController;
+use AppControllersTicketController;
+use AppControllersDrawController;
+use AppControllersAuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\DayController;
 use App\Controllers\RoundController;
@@ -230,6 +234,7 @@ Router::post('/operadores/status', [UserController::class, 'toggleStatus'], [Aut
 // Settings (Hub Unificado: Gerais & Preços, Vendedores, Operadores, Backup)
 Router::get('/configuracoes', [SettingsController::class, 'index'], [AdminMiddleware::class]);
 Router::post('/configuracoes/precos', [SettingsController::class, 'updatePricing'], [AdminMiddleware::class]);
+Router::post('/configuracoes/planejamento', [SettingsController::class, 'updatePlanning'], [AdminMiddleware::class]);
 Router::post('/configuracoes/precos/excluir', [SettingsController::class, 'deletePricing'], [AdminMiddleware::class]);
 Router::post('/configuracoes/parametros', [SettingsController::class, 'updateParameters'], [AdminMiddleware::class]);
 Router::post('/configuracoes/pix', [SettingsController::class, 'updatePix'], [AdminMiddleware::class]);
@@ -258,6 +263,38 @@ Router::get('/api/ping', function() {
 
 // Auto-backup check (runs in 0.0001s if within 5-min interval)
 \App\Services\BackupService::autoBackupIfNeeded();
+
+// Dispatch
+
+// Online Sales (Público)
+Router::get('/comprar', [OnlineSalesController::class, 'showCheckout']);
+Router::post('/comprar', [OnlineSalesController::class, 'processCheckout']);
+Router::get('/pedido/{orderCode}', [OnlineSalesController::class, 'showOrder']);
+Router::get('/pedido/{orderCode}/status', [OnlineSalesController::class, 'orderStatusJson']);
+Router::post('/pedido/{orderCode}/confirmar', [OnlineSalesController::class, 'confirmPayment']);
+
+// QR Code & Validação (Público e Autenticado)
+Router::get('/v/{token}', [ValidationController::class, 'validateByToken']);
+Router::get('/validar', [ValidationController::class, 'manualValidation']);
+Router::post('/validar', [ValidationController::class, 'manualValidation']);
+
+// Cartelas & Impressão
+Router::get('/cartelas', [TicketController::class, 'index'], [AuthMiddleware::class]);
+Router::get('/cartelas/imprimir/{tokenOrNumber}', [TicketController::class, 'printTicket']);
+Router::post('/cartelas/invalidar', [TicketController::class, 'invalidate'], [AuthMiddleware::class]);
+Router::post('/cartelas/gerar-lote', [TicketController::class, 'generateBatch'], [AdminMiddleware::class]);
+
+// Sorteio Central & Inteligência
+Router::get('/sorteio', [DrawController::class, 'index'], [AuthMiddleware::class]);
+Router::get('/admin/sorteio', [DrawController::class, 'index'], [AuthMiddleware::class]);
+Router::post('/sorteio/cantar', [DrawController::class, 'call'], [AuthMiddleware::class]);
+Router::post('/sorteio/desfazer', [DrawController::class, 'undo'], [AuthMiddleware::class]);
+Router::get('/sorteio/inteligencia', [DrawController::class, 'intelligenceJson'], [AuthMiddleware::class]);
+Router::post('/sorteio/ganhador/contato', [DrawController::class, 'winnerContact'], [AuthMiddleware::class]);
+Router::post('/sorteio/alterar-premio', [DrawController::class, 'changePrize'], [AuthMiddleware::class]);
+
+// Auditoria de Consultas a Dados Pessoais
+Router::get('/auditoria/consultas', [AuditController::class, 'personalDataAccessLogs'], [AdminMiddleware::class]);
 
 // Dispatch
 Router::dispatch();

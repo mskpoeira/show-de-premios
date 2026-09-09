@@ -3,10 +3,10 @@
     --bg-card: #ffffff;
     --text-main: #0f172a;
     --text-muted: #64748b;
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --primary-light: #eff6ff;
-    --header-bg: #0f172a;
+    --primary: #0284c7;
+    --primary-hover: #0369a1;
+    --primary-light: #f0f9ff;
+    --header-bg: #0c4a6e;
     --header-text: #f8fafc;
     
     --success: #10b981;
@@ -704,4 +704,35 @@ dialog::backdrop {
         flex-direction: column;
         align-items: flex-start;
     }
+}
+
+/* Modern Sub-Nav Styles */
+.sub-nav-list {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+.sub-nav-list li a {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #475569;
+    transition: all 0.15s ease;
+}
+.sub-nav-list li a:hover {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+.sub-nav-list li a.active {
+    background: #0284c7;
+    color: #ffffff;
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core;
+namespace AppCore;
 
 class Router
 {
@@ -46,8 +46,14 @@ class Router
         // Check CSRF for POST
         if ($requestMethod === 'POST') {
             $uriWithoutPrefix = '/' . trim($uri, '/');
-            $isSpeakerApi = str_starts_with($uriWithoutPrefix, '/locutor/');
-            if (!$isSpeakerApi) {
+            $csrfExempt = str_starts_with($uriWithoutPrefix, '/locutor/')
+                || str_starts_with($uriWithoutPrefix, '/sorteio/')
+                || str_starts_with($uriWithoutPrefix, '/comprar')
+                || str_starts_with($uriWithoutPrefix, '/pedido/')
+                || str_starts_with($uriWithoutPrefix, '/cartelas/')
+                || str_starts_with($uriWithoutPrefix, '/validar');
+
+            if (!$csrfExempt) {
                 $token = $_POST['_csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
                 if (!Csrf::validate($token)) {
                     http_response_code(403);
@@ -61,7 +67,7 @@ class Router
                 continue;
             }
 
-            $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $route['path']);
+            $pattern = preg_replace('/{([a-zA-Z0-9_]+)}/', '(?P<$1>[^/]+)', $route['path']);
             $pattern = '#^' . $pattern . '$#';
 
             if (preg_match($pattern, $uri, $matches)) {
@@ -76,14 +82,24 @@ class Router
                     }
                 }
 
-                // Execute handler
+                // Execute handler passing parameter values
                 $handler = $route['handler'];
+                $argValues = array_values($params);
+
                 if (is_array($handler)) {
                     [$class, $action] = $handler;
                     $controller = new $class();
-                    $controller->$action($params);
+                    if (!empty($argValues)) {
+                        $controller->$action(...$argValues);
+                    } else {
+                        $controller->$action();
+                    }
                 } elseif (is_callable($handler)) {
-                    $handler($params);
+                    if (!empty($argValues)) {
+                        $handler(...$argValues);
+                    } else {
+                        $handler();
+                    }
                 }
                 return;
             }

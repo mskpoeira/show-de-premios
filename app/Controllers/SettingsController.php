@@ -15,7 +15,7 @@ class SettingsController
     public function index(): void
     {
         $tab = trim($_GET['tab'] ?? 'gerais');
-        if (!in_array($tab, ['gerais', 'vendedores', 'operadores', 'backup'], true)) {
+        if (!in_array($tab, ['gerais', 'planejamento', 'vendedores', 'operadores', 'backup'], true)) {
             $tab = 'gerais';
         }
 
@@ -28,6 +28,22 @@ class SettingsController
 
         $stmtSettings = $pdo->query("SELECT key, value FROM settings");
         $settings = $stmtSettings->fetchAll(PDO::FETCH_KEY_PAIR);
+
+        
+        // Dados de Planejamento & Prêmios
+        $stmtEv = $pdo->query("SELECT * FROM events WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 1");
+        $event = $stmtEv->fetch(PDO::FETCH_ASSOC);
+        $batches = [];
+        $prizes = [];
+        if ($event) {
+            $stmtBt = $pdo->prepare("SELECT * FROM event_batches WHERE event_id = ? ORDER BY id ASC");
+            $stmtBt->execute([$event['id']]);
+            $batches = $stmtBt->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmtPz = $pdo->prepare("SELECT * FROM prizes WHERE event_id = ? ORDER BY order_num ASC");
+            $stmtPz->execute([$event['id']]);
+            $prizes = $stmtPz->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         // 2. Dados de Vendedores(as)
         $sellers = [];
@@ -106,6 +122,9 @@ class SettingsController
         View::render('settings/index', [
             'title' => 'Configurações e Administração — Show de Prêmios',
             'tab' => $tab,
+            'event' => $event,
+            'batches' => $batches,
+            'prizes' => $prizes,
             'currentPricing' => $currentPricing,
             'pricingHistory' => $pricingHistory,
             'settings' => $settings,
@@ -349,5 +368,50 @@ class SettingsController
         } catch (\Throwable $e) {
             Response::redirect('/configuracoes?tab=gerais', null, 'Erro ao limpar dados selecionados: ' . $e->getMessage());
         }
+    }
+
+    public function updatePlanning(): void
+    {
+        if (!Auth::isAdmin()) {
+            Response::redirect('/configuracoes', null, 'Acesso não autorizado.');
+        }
+
+        $pdo = Database::getConnection();
+        $eventId = (int)($_POST['event_id'] ?? 0);
+        $name = trim($_POST['name'] ?? '');
+        $date = trim($_POST['event_date'] ?? '');
+        $time = trim($_POST['event_time'] ?? '20:00');
+        $location = trim($_POST['location'] ?? 'Praça Central');
+        $prefix = strtoupper(trim($_POST['ticket_prefix'] ?? 'JDA'));
+        $singlePrice = (float)($_POST['single_price'] ?? 10.00);
+        $bundleQty = (int)($_POST['bundle_qty'] ?? 3);
+        $bundlePrice = (float)($_POST['bundle_price'] ?? 25.00);
+        $tieRule = trim($_POST['tie_rule'] ?? 'SPLIT');
+
+        // Checa se o lote já emitiu cartelas (bloqueio estrutural crítico)
+        $stmtLock = $pdo->prepare("SELECT is_locked, total_generated FROM event_batches WHERE event_id = ?");
+        $stmtLock->execute([$eventId]);
+        $batch = $stmtLock->fetch(PDO::FETCH_ASSOC);
+        $isLocked = $batch && ($batch['is_locked'] == 1 || $batch['total_generated'] > 0);
+
+        if ($isLocked) {
+            // Preserva o prefixo original se já foram emitidas cartelas
+            $stmtOldPrefix = $pdo->prepare("SELECT ticket_prefix FROM events WHERE id = ?");
+            $stmtOldPrefix->execute([$eventId]);
+            $prefix = $stmtOldPrefix->fetchColumn() ?: $prefix;
+        }
+
+        $stmtUp = $pdo->prepare("
+            UPDATE events 
+            SET name = ?, event_date = ?, event_time = ?, location = ?,
+                ticket_prefix = ?, single_price = ?, bundle_qty = ?, bundle_price = ?,
+                tie_rule = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ");
+        $stmtUp->execute([$name, $date, $time, $location, $prefix, $singlePrice, $bundleQty, $bundlePrice, $tieRule, $eventId]);
+
+        AuditService::log('SETTINGS_UPDATE', 'events', $eventId, null, ['name' => $name, 'date' => $date, 'locked' => $isLocked]);
+
+        Response::redirect('/configuracoes?tab=planejamento', 'Planejamento do evento atualizado com sucesso!' . ($isLocked ? ' (Regras estruturais protegidas contra alteração pós-emissão)' : ''));
     }
 }

@@ -1,0 +1,84 @@
+name: Deploy Show de Prêmios para Produção
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy-showdepremios:
+    name: Deploy Show de Prêmios (Hostinger VPS)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v4
+
+      - name: Validar sintaxe PHP
+        run: |
+          find app database -name "*.php" -exec php -l {} +
+          php -l index.php
+
+      - name: Criar pacote de release
+        run: |
+          mkdir -p showdepremios
+          rsync -av --exclude 'storage/' --exclude '.git/' --exclude '.github/' --exclude '.env' --exclude 'showdepremios/' ./ showdepremios/
+          tar -czf release-showdepremios.tar.gz showdepremios
+          rm -rf showdepremios
+
+      - name: Transferir Show de Prêmios para o VPS
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
+          username: ${{ secrets.HOSTINGER_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "release-showdepremios.tar.gz"
+          target: "/app/sgr"
+          overwrite: true
+
+      - name: Reconstruir e subir Show de Prêmios
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
+          username: ${{ secrets.HOSTINGER_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          command_timeout: "20m"
+          timeout: "120s"
+          script: |
+            set -e
+            cd /app/sgr
+
+            echo 'Extraindo pacote exclusivo do Show de Prêmios...'
+            tar -xzf release-showdepremios.tar.gz
+            rm -f release-showdepremios.tar.gz
+
+            echo 'Construindo imagem showdepremios...'
+            sudo docker compose -f docker-compose.prod.yml build showdepremios
+
+            echo 'Subindo container do Show de Prêmios...'
+            sudo docker compose -f docker-compose.prod.yml up -d --no-deps showdepremios
+
+            echo 'Garantindo proxy HTTPS Caddy...'
+            sudo docker compose -f docker-compose.prod.yml up -d --no-deps caddy
+
+            echo 'Aguardando estabilização...'
+            sleep 8
+
+            echo 'Verificando se Show de Prêmios está ONLINE...'
+            for i in {1..10}; do
+              if curl --fail --silent --show-error --location --max-time 15 https://showdepremios.mskpoeira.com.br/ > /dev/null; then
+                echo 'Show de Prêmios ONLINE com sucesso!'
+                exit 0
+              fi
+              echo "Tentativa \$i/10..."
+              sleep 4
+            done
+
+            echo 'Falha ao responder https://showdepremios.mskpoeira.com.br/'
+            sudo docker logs --tail 100 showdepremios-app || true
+            exit 1

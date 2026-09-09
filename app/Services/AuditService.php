@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace AppServices;
 
-use App\Core\Auth;
-use App\Core\Database;
+use AppCoreAuth;
+use AppCoreDatabase;
 
 class AuditService
 {
@@ -41,8 +41,49 @@ class AuditService
                 $createdAtBrasilia,
             ]);
         } catch (\Throwable $e) {
-            // Fail silently on audit log failure without stopping main business transaction
             error_log("AuditLog Error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Registra auditoria de consulta a dados pessoais de comprador / cartela
+     */
+    public static function logBuyerAccess(
+        int $userId,
+        string $userName,
+        string $userRole,
+        ?int $buyerId,
+        ?int $ticketId,
+        string $accessType,
+        string $method = 'PANEL',
+        string $result = 'SUCCESS'
+    ): void {
+        try {
+            $pdo = Database::getConnection();
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $sessionId = session_id() ?: null;
+
+            $stmt = $pdo->prepare("
+                INSERT INTO ticket_access_logs 
+                (user_id, user_name, user_role, buyer_id, ticket_id, access_type, method, ip_address, session_id, user_agent, result, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ");
+            $stmt->execute([
+                $userId,
+                $userName,
+                $userRole,
+                $buyerId,
+                $ticketId,
+                $accessType,
+                $method,
+                $ip,
+                $sessionId,
+                substr($userAgent, 0, 255),
+                $result
+            ]);
+        } catch (\Throwable $e) {
+            error_log("AuditLogBuyerAccess Error: " . $e->getMessage());
         }
     }
 
@@ -83,6 +124,13 @@ class AuditService
             'BACKUP_GENERATE' => '💾 Cópia de Segurança (Backup)',
             'SYSTEM_RESET' => '🧹 Limpeza do Banco de Dados (Reset)',
             'SYSTEM_CLEAN' => '🧹 Limpeza de Rodadas e Auditoria',
+            'TICKET_VIEW_PERSONAL' => '👁️ Consulta a Dados Pessoais de Cartela/Comprador',
+            'TICKET_CALL_WINNER' => '📞 Tentativa de Ligação para Ganhador',
+            'TICKET_WHATSAPP_WINNER' => '💬 Acionamento de WhatsApp do Ganhador',
+            'TICKET_REPRINT' => '🖨️ Reimpressão de Cartela',
+            'TICKET_INVALIDATE' => '🚫 Invalidação Manual de Cartela',
+            'ONLINE_ORDER_CREATE' => '🛒 Criação de Pedido de Compra Online',
+            'PAYMENT_CONFIRM' => '✅ Confirmação de Pagamento PIX/Caixa',
         ];
 
         return $map[$action] ?? ucwords(strtolower(str_replace('_', ' ', $action)));
@@ -100,6 +148,10 @@ class AuditService
             'cash_closings' => 'Fechamentos de Caixa',
             'settings' => 'Configurações do Sistema',
             'pricing_rules' => 'Regras de Precificação',
+            'tickets' => 'Cartelas',
+            'buyers' => 'Compradores',
+            'orders' => 'Pedidos',
+            'events' => 'Eventos',
         ];
 
         return $map[$entity] ?? ucfirst($entity);
