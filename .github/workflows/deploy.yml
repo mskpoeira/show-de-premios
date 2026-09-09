@@ -29,18 +29,20 @@ jobs:
           tar -czf release-showdepremios.tar.gz -C showdepremios_release .
           rm -rf showdepremios_release
 
-      - name: Transferir para diretório exclusivo /app/show-de-premios
+      - name: Transferir release para o servidor
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
           username: ${{ secrets.HOSTINGER_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          timeout: "120s"
+          command_timeout: "10m"
           source: "release-showdepremios.tar.gz"
-          target: "/app/show-de-premios"
+          target: "/tmp"
           overwrite: true
 
-      - name: Reconstruir e subir Show de Prêmios isolado
+      - name: Instalar e rodar Show de Prêmios isolado no VPS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
@@ -52,9 +54,10 @@ jobs:
           script: |
             set -e
             echo '=================================================='
-            echo 'DEPLOY ISOLADO DO SHOW DE PRÊMIOS: /app/show-de-premios'
+            echo 'CONFIGURANDO DIRETÓRIO ISOLADO: /app/show-de-premios'
             echo '=================================================='
             mkdir -p /app/show-de-premios
+            mv -f /tmp/release-showdepremios.tar.gz /app/show-de-premios/
             cd /app/show-de-premios
 
             echo 'Extraindo arquivos do release...'
@@ -69,7 +72,6 @@ jobs:
             echo 'Construindo imagem Docker exclusiva showdepremios...'
             docker build -t showdepremios-app:latest .
 
-            # Recria o container exclusivo mantendo a rede para o Caddy
             echo 'Atualizando container showdepremios-app...'
             docker stop showdepremios-app || true
             docker rm showdepremios-app || true
