@@ -113,11 +113,11 @@ header('X-Robots-Tag: noindex, nofollow');
 // Start Session
 \App\Core\Session::start();
 
-use AppControllersOnlineSalesController;
-use AppControllersValidationController;
-use AppControllersTicketController;
-use AppControllersDrawController;
-use AppControllersAuthController;
+use App\Controllers\OnlineSalesController;
+use App\Controllers\ValidationController;
+use App\Controllers\TicketController;
+use App\Controllers\DrawController;
+use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\DayController;
 use App\Controllers\RoundController;

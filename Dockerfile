@@ -15,8 +15,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /var/www/html/showdepremios
 COPY . /var/www/html/showdepremios
 
-# Setup storage permissions
+# Setup storage and application permissions
 RUN mkdir -p storage/logs storage/backups \
+    && chmod -R a+rX /var/www/html/showdepremios \
     && chown -R www-data:www-data /var/www/html/showdepremios \
     && chmod -R 775 /var/www/html/showdepremios/storage
 
