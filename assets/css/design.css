@@ -1,0 +1,96 @@
+/* Design System for Show de Prêmios */
+
+:root {
+  --color-bg: #fafafa;
+  --color-text: #212121;
+  --color-primary: #006064; /* azul-petróleo */
+  --color-primary-hover: #004d4d;
+  --color-primary-active: #003838;
+  --color-success: #388e3c; /* verde */
+  --color-success-hover: #2e7d32;
+  --color-warning: #fbc02d; /* amarelo */
+  --color-danger: #d32f2f; /* vermelho */
+  --font-family: 'Inter', system-ui, sans-serif;
+  --border-radius: 8px;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --color-card-bg: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #121212;
+    --color-text: #e0e0e0;
+    --color-primary: #80d8ff;
+    --color-primary-hover: #4ba3c7;
+    --color-primary-active: #3791b7;
+    --color-success: #81c784;
+    --color-success-hover: #66bb6a;
+    --color-warning: #ffb300;
+    --color-danger: #e57373;
+    --color-card-bg: #1e1e1e;
+  }
+}
+body {
+  background-color: var(--color-bg);
+  font-family: var(--font-family);
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--border-radius);
+  background-color: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+  outline: none;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.card {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* Utility classes */
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+
+/* Responsive typography */
+h1, .h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); }
+h2, .h2 { font-size: clamp(1.5rem, 4vw, 2rem); }
+h3, .h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
