@@ -441,14 +441,14 @@ class Migrations
             ");
 
             // Indices de Alta Performance
-            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tickets_number ON tickets(ticket_number)"); } catch (\\Throwable $e) {}
-            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tickets_token ON tickets(secure_token)"); } catch (\\Throwable $e) {}
-            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tickets_check ON tickets(check_code)"); } catch (\\Throwable $e) {}
-            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tickets_event_status ON tickets(event_id, status)"); } catch (\\Throwable $e) {}
-            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_ticket_numbers_tid ON ticket_numbers(ticket_id)"); } catch (\\Throwable $e) {}
-            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_ticket_numbers_val ON ticket_numbers(number_value)"); } catch (\\Throwable $e) {}
-            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tgs_draw_rem ON ticket_game_state(draw_id, remaining_count)"); } catch (\\Throwable $e) {}
-            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_access_logs_buyer ON ticket_access_logs(buyer_id)"); } catch (\\Throwable $e) {}
+            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tickets_number ON tickets(ticket_number)"); } catch (\Throwable $e) {}
+            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tickets_token ON tickets(secure_token)"); } catch (\Throwable $e) {}
+            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tickets_check ON tickets(check_code)"); } catch (\Throwable $e) {}
+            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tickets_event_status ON tickets(event_id, status)"); } catch (\Throwable $e) {}
+            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_ticket_numbers_tid ON ticket_numbers(ticket_id)"); } catch (\Throwable $e) {}
+            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_ticket_numbers_val ON ticket_numbers(number_value)"); } catch (\Throwable $e) {}
+            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tgs_draw_rem ON ticket_game_state(draw_id, remaining_count)"); } catch (\Throwable $e) {}
+            try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_access_logs_buyer ON ticket_access_logs(buyer_id)"); } catch (\Throwable $e) {}
 
             // Seed do Evento Inicial e Lote Padrao se tabela estiver vazia
             $stmtEventCount = $pdo->query("SELECT COUNT(*) FROM events");
@@ -474,7 +474,7 @@ class Migrations
                 ");
             }
 
-        } catch (\\Throwable $e) {
+        } catch (\Throwable $e) {
             error_log('Error in modern migrations: ' . $e->getMessage());
         }
 
