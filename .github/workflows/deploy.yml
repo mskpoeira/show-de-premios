@@ -23,11 +23,22 @@ jobs:
           php -l index.php
 
       - name: Criar pacote de release isolado
+        shell: bash
         run: |
-          mkdir -p showdepremios_release
-          rsync -av --exclude 'storage/' --exclude '.git/' --exclude '.github/' --exclude '.env' ./ showdepremios_release/
-          tar -czf release-showdepremios.tar.gz -C showdepremios_release .
-          rm -rf showdepremios_release
+          set -euo pipefail
+          RELEASE_DIR="$(mktemp -d)"
+          rsync -av \
+            --exclude 'storage/' \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.env' \
+            --exclude 'deploy_key' \
+            --exclude 'deploy_key.pub' \
+            --exclude 'showdepremios_release/' \
+            --exclude 'release-showdepremios.tar.gz' \
+            ./ "$RELEASE_DIR/"
+          tar -czf release-showdepremios.tar.gz -C "$RELEASE_DIR" .
+          rm -rf "$RELEASE_DIR"
 
       - name: Transferir release para o servidor
         uses: appleboy/scp-action@v1
@@ -52,65 +63,122 @@ jobs:
           command_timeout: "20m"
           timeout: "120s"
           script: |
-            set -e
-            echo '=================================================='
-            echo 'CONFIGURANDO DIRETÓRIO ISOLADO: /app/show-de-premios'
-            echo '=================================================='
-            mkdir -p /app/show-de-premios
-            mv -f /tmp/release-showdepremios.tar.gz /app/show-de-premios/
-            cd /app/show-de-premios
+            set -eu
+            APP_DIR=/app/show-de-premios
+            STORAGE_DIR="$APP_DIR/storage"
+            IMAGE_NEW=showdepremios-app:candidate
+            IMAGE_LATEST=showdepremios-app:latest
+            IMAGE_ROLLBACK=showdepremios-app:rollback
+            CONTAINER=showdepremios-app
+            CANDIDATE=showdepremios-candidate
+            PROXY_CONTAINER=sgr-proxy-prod
 
-            echo 'Extraindo arquivos do release...'
+            echo '=================================================='
+            echo 'DEPLOY SHOW DE PRÊMIOS'
+            echo '=================================================='
+
+            mkdir -p "$APP_DIR"
+            mv -f /tmp/release-showdepremios.tar.gz "$APP_DIR/"
+            cd "$APP_DIR"
+
+            echo 'Extraindo release...'
             tar -xzf release-showdepremios.tar.gz
             rm -f release-showdepremios.tar.gz
 
-            # Garantir diretorios de storage locais e exclusivos
             mkdir -p storage/logs storage/backups
             chmod -R 775 storage
             chown -R 33:33 storage || true
 
-            echo 'Construindo imagem Docker exclusiva showdepremios...'
-            docker build -t showdepremios-app:latest .
-
-            echo 'Atualizando container showdepremios-app...'
-            docker stop showdepremios-app || true
-            docker rm showdepremios-app || true
-
-            # Detecta a rede Docker do proxy Caddy para manter conectividade
-            NET=$(docker network ls --format '{{.Name}}' | grep -E 'sgr_default|app_default|bridge' | head -n 1)
-            if [ -z "$NET" ]; then
-              NET="bridge"
+            echo 'Detectando rede real do proxy Caddy...'
+            NET=''
+            if docker inspect "$PROXY_CONTAINER" >/dev/null 2>&1; then
+              NET=$(docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROXY_CONTAINER" | grep -Ev '^(bridge|host|none)$' | head -n 1 || true)
             fi
-            echo "Conectando container na rede Docker: $NET"
+
+            if [ -z "$NET" ]; then
+              echo 'ERRO: não foi encontrada rede Docker user-defined ligada ao proxy sgr-proxy-prod.'
+              echo 'Redes do proxy:'
+              docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROXY_CONTAINER" 2>/dev/null || true
+              echo 'Redes disponíveis:'
+              docker network ls || true
+              exit 1
+            fi
+            echo "Rede do proxy: $NET"
+
+            echo 'Preservando imagem anterior para rollback...'
+            OLD_IMAGE=$(docker inspect -f '{{.Image}}' "$CONTAINER" 2>/dev/null || true)
+            if [ -n "$OLD_IMAGE" ]; then
+              docker tag "$OLD_IMAGE" "$IMAGE_ROLLBACK" || true
+            fi
+
+            echo 'Construindo nova imagem...'
+            docker build -t "$IMAGE_NEW" .
+
+            echo 'Subindo candidato sem alterar a rota pública...'
+            docker rm -f "$CANDIDATE" >/dev/null 2>&1 || true
+            docker run -d \
+              --name "$CANDIDATE" \
+              --network "$NET" \
+              -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+              "$IMAGE_NEW"
+
+            sleep 5
+            if ! docker exec "$CANDIDATE" php -r '$r=@file_get_contents("http://127.0.0.1/"); if ($r===false) { exit(1); }'; then
+              echo 'Candidato não respondeu internamente. Mantendo produção anterior.'
+              docker logs --tail 120 "$CANDIDATE" || true
+              docker rm -f "$CANDIDATE" || true
+              exit 1
+            fi
+            docker rm -f "$CANDIDATE" || true
+
+            echo 'Promovendo nova imagem...'
+            docker tag "$IMAGE_NEW" "$IMAGE_LATEST"
+            docker stop "$CONTAINER" >/dev/null 2>&1 || true
+            docker rm "$CONTAINER" >/dev/null 2>&1 || true
 
             docker run -d \
-              --name showdepremios-app \
+              --name "$CONTAINER" \
               --restart always \
               --network "$NET" \
               --network-alias showdepremios \
-              -v /app/show-de-premios/storage:/var/www/html/showdepremios/storage \
-              showdepremios-app:latest
+              -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+              "$IMAGE_LATEST"
 
-            echo 'Garantindo recarregamento de rotas do Caddy...'
-            if docker ps --format '{{.Names}}' | grep -q sgr-proxy-prod; then
-              docker exec sgr-proxy-prod caddy reload --config /etc/caddy/Caddyfile || true
-            elif systemctl is-active --quiet caddy; then
-              systemctl reload caddy || true
-            fi
+            echo 'Recarregando Caddy...'
+            docker exec "$PROXY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile || true
 
-            echo 'Aguardando estabilização do container...'
-            sleep 8
-
-            echo 'Validando serviço online em https://showdepremios.mskpoeira.com.br...'
-            for i in {1..12}; do
-              if curl --fail --silent --show-error --location --max-time 15 https://showdepremios.mskpoeira.com.br/ > /dev/null; then
-                echo 'Show de Prêmios ONLINE com sucesso no diretório isolado /app/show-de-premios!'
-                exit 0
+            echo 'Validando URL pública...'
+            ONLINE=0
+            for i in $(seq 1 12); do
+              if curl --fail --silent --show-error --location --max-time 15 https://showdepremios.mskpoeira.com.br/ >/dev/null; then
+                ONLINE=1
+                break
               fi
-              echo "Tentativa \$i/12..."
+              echo "Tentativa $i/12..."
               sleep 4
             done
 
-            echo 'Falha ao responder https://showdepremios.mskpoeira.com.br/'
-            docker logs --tail 100 showdepremios-app || true
+            if [ "$ONLINE" -eq 1 ]; then
+              echo 'SHOW DE PRÊMIOS ONLINE.'
+              docker image rm "$IMAGE_ROLLBACK" >/dev/null 2>&1 || true
+              exit 0
+            fi
+
+            echo 'Nova versão não respondeu externamente. Iniciando rollback...'
+            docker logs --tail 150 "$CONTAINER" || true
+            docker rm -f "$CONTAINER" || true
+
+            if docker image inspect "$IMAGE_ROLLBACK" >/dev/null 2>&1; then
+              docker run -d \
+                --name "$CONTAINER" \
+                --restart always \
+                --network "$NET" \
+                --network-alias showdepremios \
+                -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+                "$IMAGE_ROLLBACK"
+              docker exec "$PROXY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile || true
+              echo 'Rollback executado.'
+            else
+              echo 'Não existe imagem anterior disponível para rollback.'
+            fi
             exit 1

@@ -1,6 +1,6 @@
 <?php
-use AppCoreView;
-use AppServicesTicketService;
+use App\Core\View;
+use App\Services\TicketService;
 
 // Agrupa os números por colunas B, I, N, G, O para exibição na grade
 $grid = ['B' => [], 'I' => [], 'N' => [], 'G' => [], 'O' => []];

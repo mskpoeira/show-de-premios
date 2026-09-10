@@ -1,9 +1,9 @@
 <?php
 
-namespace AppServices;
+namespace App\Services;
 
-use AppCoreAuth;
-use AppCoreDatabase;
+use App\Core\Auth;
+use App\Core\Database;
 
 class AuditService
 {

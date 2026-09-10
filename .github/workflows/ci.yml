@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "fix/**"
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pdo_sqlite, pdo_mysql, pdo_pgsql
+          tools: composer
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-lock
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Optimize autoload
+        run: composer dump-autoload --optimize --strict-psr
+
+      - name: Lint PHP files
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r file; do
+            php -l "$file"
+          done < <(git ls-files '*.php')
+
+      - name: Autoload smoke test
+        run: |
+          php -r 'require "vendor/autoload.php"; foreach (["App\\Core\\Auth","App\\Core\\Router","App\\Core\\Database","App\\Services\\PricingService","Database\\Migrations"] as $class) { if (!class_exists($class)) { fwrite(STDERR, "Autoload failed: ".$class.PHP_EOL); exit(1); } } echo "Autoload OK".PHP_EOL;'
+
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit -c phpunit.xml --no-coverage
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse app database index.php --level=7 --no-progress
+
+      - name: Build Docker image
+        run: docker build -t show-de-premios .
