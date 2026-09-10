@@ -1,6 +1,6 @@
 <?php
-use AppCoreView;
-use AppServicesTicketService;
+use App\Core\View;
+use App\Services\TicketService;
 ?>
 
 <div class="content-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">

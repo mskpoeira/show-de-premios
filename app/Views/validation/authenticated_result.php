@@ -1,6 +1,6 @@
 <?php
-use AppCoreView;
-use AppServicesTicketService;
+use App\Core\View;
+use App\Services\TicketService;
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

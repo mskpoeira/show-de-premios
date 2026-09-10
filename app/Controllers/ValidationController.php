@@ -1,13 +1,13 @@
 <?php
 
-namespace AppControllers;
+namespace App\Controllers;
 
-use AppCoreAuth;
-use AppCoreDatabase;
-use AppCoreResponse;
-use AppCoreView;
-use AppServicesAuditService;
-use AppServicesTicketService;
+use App\Core\Auth;
+use App\Core\Database;
+use App\Core\Response;
+use App\Core\View;
+use App\Services\AuditService;
+use App\Services\TicketService;
 use PDO;
 
 class ValidationController

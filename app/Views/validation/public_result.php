@@ -1,5 +1,5 @@
 <?php
-use AppCoreView;
+use App\Core\View;
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

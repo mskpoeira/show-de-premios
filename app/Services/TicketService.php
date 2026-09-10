@@ -1,8 +1,8 @@
 <?php
 
-namespace AppServices;
+namespace App\Services;
 
-use AppCoreDatabase;
+use App\Core\Database;
 use PDO;
 
 class TicketService

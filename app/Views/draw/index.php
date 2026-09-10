@@ -1,5 +1,5 @@
 <?php
-use AppCoreView;
+use App\Core\View;
 $summary = $intelligence['summary'] ?? [];
 $called = $intelligence['called_numbers'] ?? [];
 $calledValues = array_column($called, 'number_value');
