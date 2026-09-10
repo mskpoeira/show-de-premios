@@ -1,4 +1,4 @@
-﻿# Environment variables
+# Environment variables
 .env
 .env.*
 !.env.example
@@ -31,3 +31,6 @@ desktop.ini
 .vscode/
 *.suo
 *.user
+/deploy_key
+/deploy_key.pub
+
