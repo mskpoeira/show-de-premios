@@ -39,9 +39,9 @@ jobs:
             php -l "$file"
           done < <(git ls-files '*.php')
 
-      - - name: Autoload smoke test
-  run: |
-    php -r 'require "vendor/autoload.php"; foreach (["App\\Core\\Auth","App\\Core\\Router","App\\Core\\Database","App\\Services\\PricingService","Database\\Migrations"] as $class) { if (!class_exists($class)) { fwrite(STDERR, "Autoload failed: ".$class.PHP_EOL); exit(1); } } echo "Autoload OK".PHP_EOL;'
+      - name: Autoload smoke test
+        run: |
+          php -r 'require "vendor/autoload.php"; foreach (["App\\Core\\Auth","App\\Core\\Router","App\\Core\\Database","App\\Services\\PricingService","Database\\Migrations"] as $class) { if (!class_exists($class)) { fwrite(STDERR, "Autoload failed: ".$class.PHP_EOL); exit(1); } } echo "Autoload OK".PHP_EOL;'
 
       - name: Run PHPUnit
         run: vendor/bin/phpunit -c phpunit.xml --no-coverage
