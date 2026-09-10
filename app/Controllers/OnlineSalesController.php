@@ -116,6 +116,7 @@ class OnlineSalesController
                 $stmtNewBuyer->execute([$name, $cpf, $phoneNormalized, !empty($email) ? $email : null, $wantsEmail]);
                 $buyerId = (int)$pdo->lastInsertId();
             } else {
+                $buyerId = (int)$buyerId;
                 $stmtUpBuyer = $pdo->prepare("
                     UPDATE buyers 
                     SET name = ?, phone = ?, email = COALESCE(?, email), wants_email = ?, updated_at = CURRENT_TIMESTAMP
@@ -174,13 +175,13 @@ class OnlineSalesController
 
             $pixPayload = '';
             if (!empty($pixKey)) {
-                $pixPayload = PixService::generateStaticPayload(
-                    $pixKey,
-                    $pixName ?: 'Show de Premios',
-                    $pixCity ?: 'Sao Paulo',
+                $pixPayload = PixService::createPayload(
+                    (string)$pixKey,
+                    (string)($pixName ?: 'Show de Premios'),
+                    (string)($pixCity ?: 'Sao Paulo'),
+                    'Show de Premios ' . $orderCode,
                     $totalAmount,
-                    $orderCode,
-                    'Show de Premios ' . $orderCode
+                    $orderCode
                 );
             }
 
