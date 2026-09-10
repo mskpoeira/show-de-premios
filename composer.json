@@ -1,4 +1,8 @@
 {
+  "name": "mskpoeira/show-de-premios",
+  "description": "Sistema de gerenciamento do Show de Prêmios",
+  "license": "proprietary",
+  "type": "project",
   "require": {
     "php": "^8.2",
     "ext-pdo": "*"
