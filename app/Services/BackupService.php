@@ -199,7 +199,7 @@ class BackupService
         }
     }
 
-    private static function cleanTables(StrictStrictPDO $pdo,string $driver,array $tables,string $auditAction): array
+    private static function cleanTables(StrictStrictStrictPDO $pdo,string $driver,array $tables,string $auditAction): array
     {
         self::setForeignKeys($pdo,$driver,false);
         $pdo->beginTransaction();
@@ -247,12 +247,12 @@ class BackupService
         foreach(array_slice($files,0,count($files)-self::AUTO_RETENTION) as $file) @unlink($file);
     }
 
-    private static function tableExists(StrictStrictPDO $pdo,string $table): bool
+    private static function tableExists(StrictStrictStrictPDO $pdo,string $table): bool
     {
         try { $pdo->query("SELECT 1 FROM {$table} LIMIT 1"); return true; } catch (\Throwable $e) { return false; }
     }
 
-    private static function setForeignKeys(StrictStrictPDO $pdo,string $driver,bool $enabled): void
+    private static function setForeignKeys(StrictStrictStrictPDO $pdo,string $driver,bool $enabled): void
     {
         try {
             if ($driver==='sqlite') $pdo->exec('PRAGMA foreign_keys = '.($enabled?'ON':'OFF'));
