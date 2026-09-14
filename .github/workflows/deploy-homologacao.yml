@@ -1,0 +1,154 @@
+name: Deploy Show de Premios - Homologacao
+
+on:
+  push:
+    branches: [homologacao]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: show-de-premios-homologacao
+  cancel-in-progress: true
+
+jobs:
+  validate-and-deploy:
+    name: Validar e publicar homologacao isolada
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v5
+
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pdo_sqlite, pdo_mysql, pdo_pgsql
+          tools: composer
+
+      - name: Instalar dependencias
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Validar dependencias
+        run: composer audit --no-interaction
+
+      - name: Validar sintaxe PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r file; do php -l "$file"; done < <(git ls-files '*.php')
+
+      - name: Executar testes
+        run: vendor/bin/phpunit -c phpunit.xml --no-coverage
+
+      - name: Validar imagem Docker
+        run: docker build -t show-de-premios-homologacao:${{ github.sha }} .
+
+      - name: Criar pacote isolado
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_DIR="$(mktemp -d)"
+          rsync -av \
+            --exclude 'storage/' \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.env' \
+            --exclude 'deploy_key' \
+            --exclude 'deploy_key.pub' \
+            ./ "$RELEASE_DIR/"
+          tar -czf release-showdepremios-homologacao.tar.gz -C "$RELEASE_DIR" .
+          rm -rf "$RELEASE_DIR"
+
+      - name: Transferir release para VPS
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
+          username: ${{ secrets.HOSTINGER_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: "120s"
+          command_timeout: "10m"
+          source: "release-showdepremios-homologacao.tar.gz"
+          target: "/tmp"
+          overwrite: true
+
+      - name: Implantar homologacao isolada
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
+          username: ${{ secrets.HOSTINGER_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: "120s"
+          command_timeout: "20m"
+          script: |
+            set -eu
+            APP_DIR=/app/show-de-premios-homologacao
+            STORAGE_DIR="$APP_DIR/storage"
+            IMAGE_NEW=showdepremios-homologacao:candidate
+            IMAGE_LATEST=showdepremios-homologacao:latest
+            IMAGE_ROLLBACK=showdepremios-homologacao:rollback
+            CONTAINER=showdepremios-homologacao
+            PORT=18080
+
+            mkdir -p "$APP_DIR" "$STORAGE_DIR/logs" "$STORAGE_DIR/backups" "$STORAGE_DIR/rate-limit"
+            mv -f /tmp/release-showdepremios-homologacao.tar.gz "$APP_DIR/"
+            cd "$APP_DIR"
+            tar -xzf release-showdepremios-homologacao.tar.gz
+            rm -f release-showdepremios-homologacao.tar.gz
+            chmod -R 775 "$STORAGE_DIR"
+            chown -R 33:33 "$STORAGE_DIR" || true
+
+            OLD_IMAGE=$(docker inspect -f '{{.Image}}' "$CONTAINER" 2>/dev/null || true)
+            if [ -n "$OLD_IMAGE" ]; then docker tag "$OLD_IMAGE" "$IMAGE_ROLLBACK" || true; fi
+
+            docker build -t "$IMAGE_NEW" .
+
+            docker run --rm \
+              -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+              "$IMAGE_NEW" php bin/migrate.php
+
+            docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+            docker tag "$IMAGE_NEW" "$IMAGE_LATEST"
+            docker run -d \
+              --name "$CONTAINER" \
+              --restart always \
+              -p "$PORT:80" \
+              -e APP_ENV=homologacao \
+              -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+              "$IMAGE_LATEST"
+
+            ONLINE=0
+            for i in $(seq 1 15); do
+              if curl --fail --silent --show-error --max-time 10 "http://127.0.0.1:$PORT/api/ping" >/dev/null; then
+                ONLINE=1
+                break
+              fi
+              sleep 3
+            done
+
+            if [ "$ONLINE" -eq 1 ]; then
+              echo 'HOMOLOGACAO ONLINE EM http://77.37.40.81:18080'
+              docker image rm "$IMAGE_ROLLBACK" >/dev/null 2>&1 || true
+              exit 0
+            fi
+
+            echo 'Falha no health-check da homologacao. Iniciando rollback.'
+            docker logs --tail 150 "$CONTAINER" || true
+            docker rm -f "$CONTAINER" || true
+            if docker image inspect "$IMAGE_ROLLBACK" >/dev/null 2>&1; then
+              docker run -d \
+                --name "$CONTAINER" \
+                --restart always \
+                -p "$PORT:80" \
+                -e APP_ENV=homologacao \
+                -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+                "$IMAGE_ROLLBACK"
+            fi
+            exit 1
