@@ -22,6 +22,7 @@ $isCartelas = str_starts_with($currentUri, '/cartelas');
 $isSorteio = (str_starts_with($currentUri, '/sorteio') || str_starts_with($currentUri, '/locutor'));
 $isCaixa = (str_starts_with($currentUri, '/caixa') || str_starts_with($currentUri, '/dia') || str_starts_with($currentUri, '/rodada'));
 $isRelatorios = str_starts_with($currentUri, '/relatorios');
+$isFireTest = str_starts_with($currentUri, '/fire-test.php');
 $isAdminSection = (str_starts_with($currentUri, '/configuracoes') || str_starts_with($currentUri, '/auditoria') || str_starts_with($currentUri, '/backup'));
 ?>
 <!DOCTYPE html>
@@ -79,6 +80,7 @@ $isAdminSection = (str_starts_with($currentUri, '/configuracoes') || str_starts_
             <li><a href="<?= View::url('telao') ?>" target="_blank" style="color:#d97706;font-weight:800;" title="Abrir telão do público">📺 Telão Público ↗</a></li>
             <li><a href="<?= View::url('validar') ?>" target="_blank" style="color:#0f766e;font-weight:700;">🔍 Validar Cartela ↗</a></li>
             <li><a href="<?= View::url('relatorios') ?>" class="<?= $isRelatorios ? 'active' : '' ?>">📑 Relatórios</a></li>
+            <li><a href="/fire-test.php" class="<?= $isFireTest ? 'active' : '' ?>" style="color:#7c3aed;font-weight:800;">🧪 Prova de Fogo</a></li>
             <?php if (Auth::isAdmin()): ?>
                 <li><a href="<?= View::url('configuracoes') ?>" class="<?= $isAdminSection ? 'active' : '' ?>">⚙️ Administração</a></li>
             <?php endif; ?>
@@ -105,7 +107,7 @@ $isAdminSection = (str_starts_with($currentUri, '/configuracoes') || str_starts_
     </main>
 
     <footer class="app-footer">
-        <p>Show de Prêmios &copy; <?= date('Y') ?> &bull; Sistema Seguro &bull; Início Histórico: 06/09/2026</p>
+        <p>Show de Prêmios &copy; <?= date('Y') ?> &bull; Sistema Seguro &bull; Início Histórico: 06/09/2026 &bull; v<?= View::e($appVersion) ?></p>
     </footer>
 
     <script src="<?= View::url('assets/js/app.js') ?>"></script>
