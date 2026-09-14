@@ -4,6 +4,11 @@ use App\Core\Csrf;
 use App\Core\View;
 
 $csrfToken = Csrf::getToken();
+$appVersion = trim((string)(getenv('APP_VERSION') ?: ''));
+if ($appVersion === '') {
+    $versionFile = __DIR__ . '/../../../VERSION';
+    $appVersion = is_file($versionFile) ? trim((string)file_get_contents($versionFile)) : 'dev';
+}
 $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '/';
 if (str_starts_with($currentUri, '/showdepremios/')) {
     $currentUri = substr($currentUri, strlen('/showdepremios'));
@@ -45,6 +50,7 @@ $isAdminSection = (str_starts_with($currentUri, '/configuracoes') || str_starts_
             <a href="<?= View::url('painel') ?>" class="brand-title">
                 🏆 <?= mb_strtoupper(View::e(View::systemTitle())) ?>
                 <span class="brand-badge">OFICIAL</span>
+                <span class="brand-badge" title="Versão da aplicação">v<?= View::e($appVersion) ?></span>
             </a>
 
             <div class="user-nav">
