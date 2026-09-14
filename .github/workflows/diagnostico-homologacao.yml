@@ -1,0 +1,56 @@
+name: Diagnostico Homologacao
+
+on:
+  push:
+    branches: [diag-homologacao]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coletar diagnostico do VPS
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
+          VPS_USER: ${{ secrets.HOSTINGER_USER || 'root' }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes -o ConnectTimeout=20 "$VPS_USER@$VPS_HOST" 'bash -s' > diagnostico-homologacao.txt 2>&1 <<'REMOTE'
+          set +e
+          echo '=== DATA ==='; date -Is
+          echo '=== DOCKER PS ==='; docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}\t{{.Networks}}'
+          echo '=== LISTEN PORTS ==='; ss -lntp | grep -E ':(80|443|18080)\b' || true
+          echo '=== HML PORT BINDINGS ==='; docker inspect showdepremios-homologacao --format '{{json .HostConfig.PortBindings}}' 2>&1 || true
+          echo '=== HML NETWORKS ==='; docker inspect showdepremios-homologacao --format '{{json .NetworkSettings.Networks}}' 2>&1 || true
+          echo '=== PROXY PORT BINDINGS ==='; docker inspect sgr-proxy-prod --format '{{json .HostConfig.PortBindings}}' 2>&1 || true
+          echo '=== PROXY NETWORKS ==='; docker inspect sgr-proxy-prod --format '{{json .NetworkSettings.Networks}}' 2>&1 || true
+          echo '=== LOCAL HML 18080 ==='; curl -sv --max-time 10 http://127.0.0.1:18080/api/ping 2>&1 || true
+          echo '=== HML VIA DOCKER NETWORK FROM PROXY ==='; docker exec sgr-proxy-prod sh -lc 'wget -S -O- -T 10 http://showdepremios-homologacao/api/ping 2>&1 || true' 2>&1 || true
+          echo '=== CADDY ROUTE ==='; docker exec sgr-proxy-prod sh -lc "grep -n -A8 -B3 'SHOWDEPREMIOS HOMOLOGACAO\|showdepremios-hml' /etc/caddy/Caddyfile || true" 2>&1 || true
+          echo '=== CADDY VALIDATE ==='; docker exec sgr-proxy-prod caddy validate --config /etc/caddy/Caddyfile 2>&1 || true
+          echo '=== HTTPS LOOPBACK ==='; curl -skv --resolve showdepremios-hml.77-37-40-81.sslip.io:443:127.0.0.1 --max-time 15 https://showdepremios-hml.77-37-40-81.sslip.io/api/ping 2>&1 || true
+          echo '=== PRODUCTION LOOPBACK ==='; curl -skv --resolve showdepremios.mskpoeira.com.br:443:127.0.0.1 --max-time 15 https://showdepremios.mskpoeira.com.br/api/ping 2>&1 || true
+          echo '=== UFW ==='; (ufw status verbose || true) 2>&1
+          echo '=== IPTABLES INPUT ==='; (iptables -S INPUT || true) 2>&1
+          echo '=== CADDY LOG TAIL ==='; docker logs --tail 120 sgr-proxy-prod 2>&1 || true
+          REMOTE
+          cat diagnostico-homologacao.txt
+
+      - name: Salvar diagnostico
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostico-homologacao
+          path: diagnostico-homologacao.txt
+          retention-days: 3
