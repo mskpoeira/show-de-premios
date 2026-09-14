@@ -20,34 +20,30 @@ class CashService
     {
         $pdo = Database::getConnection();
 
-        // 1. Initial cash
         $stmt = $pdo->prepare("SELECT initial_cash FROM operation_days WHERE id = ?");
         $stmt->execute([$dayId]);
         $initialCash = (float)($stmt->fetchColumn() ?: 0.00);
 
-        // 2. Total sales
         $stmt = $pdo->prepare("
-            SELECT COALESCE(SUM(amount), 0.00) 
-            FROM sales 
+            SELECT COALESCE(SUM(amount), 0.00)
+            FROM sales
             WHERE operation_day_id = ? AND cancelled_at IS NULL
         ");
         $stmt->execute([$dayId]);
         $totalSales = (float)$stmt->fetchColumn();
 
-        // 3. Prizes paid
         $stmt = $pdo->prepare("
-            SELECT COALESCE(SUM(prize_1 + prize_2), 0.00) 
-            FROM rounds 
+            SELECT COALESCE(SUM(COALESCE(prize_1,0) + COALESCE(prize_2,0) + COALESCE(prize_3,0)), 0.00)
+            FROM rounds
             WHERE operation_day_id = ? AND status != 'CANCELLED'
         ");
         $stmt->execute([$dayId]);
         $totalPrizes = (float)$stmt->fetchColumn();
 
-        // 4. Cash movements
         $stmt = $pdo->prepare("
-            SELECT type, COALESCE(SUM(amount), 0.00) as total 
-            FROM cash_movements 
-            WHERE operation_day_id = ? 
+            SELECT type, COALESCE(SUM(amount), 0.00) as total
+            FROM cash_movements
+            WHERE operation_day_id = ?
             GROUP BY type
         ");
         $stmt->execute([$dayId]);
@@ -57,79 +53,74 @@ class CashService
         $otherInflows  = (float)($movements['INFLOW'] ?? 0.00);
         $otherOutflows = (float)($movements['OUTFLOW'] ?? 0.00);
 
-        // Expected cash
         $expectedCash = $initialCash + $totalSales + $otherInflows - $totalPrizes - $withdrawals - $otherOutflows;
 
-        // Breakdown por método de pagamento (CASH, PIX, DEBIT, CREDIT)
         $stmtMvMethod = $pdo->prepare("
-            SELECT COALESCE(payment_method, 'CASH') as p_method, type, COALESCE(SUM(amount), 0.00) as total 
-            FROM cash_movements 
-            WHERE operation_day_id = ? 
+            SELECT COALESCE(payment_method, 'CASH') as p_method, type, COALESCE(SUM(amount), 0.00) as total
+            FROM cash_movements
+            WHERE operation_day_id = ?
             GROUP BY payment_method, type
         ");
         $stmtMvMethod->execute([$dayId]);
         $mvRows = $stmtMvMethod->fetchAll(PDO::FETCH_ASSOC);
 
         $methodsBreakdown = [
-            'CASH'   => ['name' => 'Dinheiro em Espécie', 'icon' => '💵', 'inflows' => 0.00, 'outflows' => 0.00, 'sales' => 0.00, 'total' => 0.00],
-            'PIX'    => ['name' => 'PIX', 'icon' => '⚡', 'inflows' => 0.00, 'outflows' => 0.00, 'sales' => 0.00, 'total' => 0.00],
-            'DEBIT'  => ['name' => 'Cartão de Débito', 'icon' => '💳', 'inflows' => 0.00, 'outflows' => 0.00, 'sales' => 0.00, 'total' => 0.00],
-            'CREDIT' => ['name' => 'Cartão de Crédito', 'icon' => '💳', 'inflows' => 0.00, 'outflows' => 0.00, 'sales' => 0.00, 'total' => 0.00],
+            'CASH'   => self::emptyMethod('Dinheiro em Espécie', '💵'),
+            'PIX'    => self::emptyMethod('PIX', '⚡'),
+            'DEBIT'  => self::emptyMethod('Cartão de Débito', '💳'),
+            'CREDIT' => self::emptyMethod('Cartão de Crédito', '💳'),
         ];
+        $methodsBreakdown['CASH']['inflows'] = $initialCash;
 
-        // Adiciona fundo de troco inicial ao dinheiro
-        $methodsBreakdown['CASH']['inflows'] += $initialCash;
-
-        foreach ($mvRows as $r) {
-            $m = strtoupper($r['p_method'] ?: 'CASH');
-            if (!isset($methodsBreakdown[$m])) {
-                $methodsBreakdown[$m] = ['name' => $m, 'icon' => '💰', 'inflows' => 0.00, 'outflows' => 0.00, 'sales' => 0.00, 'total' => 0.00];
-            }
-            if ($r['type'] === 'INFLOW') {
-                $methodsBreakdown[$m]['inflows'] += (float)$r['total'];
+        foreach ($mvRows as $row) {
+            $method = strtoupper((string)($row['p_method'] ?: 'CASH'));
+            $info = $methodsBreakdown[$method] ?? self::emptyMethod($method, '💰');
+            if ((string)$row['type'] === 'INFLOW') {
+                $info['inflows'] += (float)$row['total'];
             } else {
-                $methodsBreakdown[$m]['outflows'] += (float)$r['total'];
+                $info['outflows'] += (float)$row['total'];
             }
+            $methodsBreakdown[$method] = $info;
         }
 
-        // Vendas por método
         try {
             $stmtSalesMethod = $pdo->prepare("
-                SELECT COALESCE(payment_method, 'CASH') as p_method, COALESCE(SUM(amount), 0.00) as total 
-                FROM sales 
-                WHERE operation_day_id = ? AND cancelled_at IS NULL 
+                SELECT COALESCE(payment_method, 'CASH') as p_method, COALESCE(SUM(amount), 0.00) as total
+                FROM sales
+                WHERE operation_day_id = ? AND cancelled_at IS NULL
                 GROUP BY payment_method
             ");
             $stmtSalesMethod->execute([$dayId]);
-            foreach ($stmtSalesMethod->fetchAll(PDO::FETCH_ASSOC) as $sr) {
-                $sm = strtoupper($sr['p_method'] ?: 'CASH');
-                if (!isset($methodsBreakdown[$sm])) {
-                    $methodsBreakdown[$sm] = ['name' => $sm, 'icon' => '💰', 'inflows' => 0.00, 'outflows' => 0.00, 'sales' => 0.00, 'total' => 0.00];
-                }
-                $methodsBreakdown[$sm]['sales'] += (float)$sr['total'];
+            foreach ($stmtSalesMethod->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $method = strtoupper((string)($row['p_method'] ?: 'CASH'));
+                $info = $methodsBreakdown[$method] ?? self::emptyMethod($method, '💰');
+                $info['sales'] += (float)$row['total'];
+                $methodsBreakdown[$method] = $info;
             }
-        } catch (\Throwable $e) {}
-
-        // Prêmios são pagos preferencialmente em dinheiro físico
-        $methodsBreakdown['CASH']['outflows'] += $totalPrizes;
-
-        foreach ($methodsBreakdown as $k => &$info) {
-            $info['total'] = round($info['inflows'] + $info['sales'] - $info['outflows'], 2);
+        } catch (\Throwable $e) {
+            error_log('[CashService sales breakdown] ' . $e->getMessage());
         }
-        unset($info);
 
-        // Current closing if exists
+        $methodsBreakdown['CASH']['outflows'] += $totalPrizes;
+        foreach ($methodsBreakdown as $key => $info) {
+            $info['total'] = round($info['inflows'] + $info['sales'] - $info['outflows'], 2);
+            $methodsBreakdown[$key] = $info;
+        }
+
         $stmt = $pdo->prepare("SELECT * FROM cash_closings WHERE operation_day_id = ?");
         $stmt->execute([$dayId]);
-        $closing = $stmt->fetch();
+        $closing = $stmt->fetch(PDO::FETCH_ASSOC);
+        $closingData = is_array($closing) ? $closing : [];
 
-        $countedCash = $closing ? (float)$closing['counted_cash'] : null;
+        $countedCash = array_key_exists('counted_cash', $closingData) && $closingData['counted_cash'] !== null
+            ? (float)$closingData['counted_cash']
+            : null;
         $difference = $countedCash !== null ? round($countedCash - $expectedCash, 2) : null;
         $tolerance = self::getTolerance();
 
         $status = 'PENDING';
         if ($countedCash !== null) {
-            $status = abs($difference) <= $tolerance ? 'OK' : 'DIVERGENCE';
+            $status = abs((float)$difference) <= $tolerance ? 'OK' : 'DIVERGENCE';
         }
 
         return [
@@ -141,16 +132,28 @@ class CashService
             'other_outflows' => round($otherOutflows, 2),
             'expected_cash'  => round($expectedCash, 2),
             'counted_cash'   => $countedCash !== null ? round($countedCash, 2) : null,
-            'counted_money'  => isset($closing['counted_money']) && $closing['counted_money'] !== null ? (float)$closing['counted_money'] : null,
-            'counted_pix'    => isset($closing['counted_pix']) && $closing['counted_pix'] !== null ? (float)$closing['counted_pix'] : null,
-            'counted_debit'  => isset($closing['counted_debit']) && $closing['counted_debit'] !== null ? (float)$closing['counted_debit'] : null,
-            'counted_credit' => isset($closing['counted_credit']) && $closing['counted_credit'] !== null ? (float)$closing['counted_credit'] : null,
+            'counted_money'  => isset($closingData['counted_money']) ? (float)$closingData['counted_money'] : null,
+            'counted_pix'    => isset($closingData['counted_pix']) ? (float)$closingData['counted_pix'] : null,
+            'counted_debit'  => isset($closingData['counted_debit']) ? (float)$closingData['counted_debit'] : null,
+            'counted_credit' => isset($closingData['counted_credit']) ? (float)$closingData['counted_credit'] : null,
             'methods'        => $methodsBreakdown,
             'difference'     => $difference,
             'tolerance'      => $tolerance,
             'status'         => $status,
-            'justification'  => $closing['justification'] ?? null,
-            'closed_at'      => $closing['closed_at'] ?? null,
+            'justification'  => $closingData['justification'] ?? null,
+            'closed_at'      => $closingData['closed_at'] ?? null,
+        ];
+    }
+
+    private static function emptyMethod(string $name, string $icon): array
+    {
+        return [
+            'name' => $name,
+            'icon' => $icon,
+            'inflows' => 0.0,
+            'outflows' => 0.0,
+            'sales' => 0.0,
+            'total' => 0.0,
         ];
     }
 }
