@@ -2,6 +2,8 @@
 
 namespace App\Core;
 
+use RuntimeException;
+
 class Session
 {
     private const DEFAULT_LIFETIME = 28800; // 8 horas
@@ -9,9 +11,12 @@ class Session
 
     public static function start(): void
     {
-        if (session_status() !== PHP_SESSION_NONE) {
+        if (session_status() === PHP_SESSION_ACTIVE) {
             self::enforceIdleTimeout();
             return;
+        }
+        if (session_status() === PHP_SESSION_DISABLED) {
+            throw new RuntimeException('Sessões PHP estão desabilitadas no servidor.');
         }
 
         $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
@@ -31,7 +36,9 @@ class Session
         ]);
 
         session_name('SHOWDEPREMIOS_SESSION');
-        session_start();
+        if (!session_start()) {
+            throw new RuntimeException('Não foi possível iniciar a sessão.');
+        }
         self::enforceIdleTimeout();
     }
 
@@ -55,21 +62,24 @@ class Session
 
     public static function destroy(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
             self::start();
         }
 
         $_SESSION = [];
-        if (ini_get('session.use_cookies')) {
+        if ((bool)ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
-            setcookie(session_name(), '', [
-                'expires' => time() - 42000,
-                'path' => $params['path'] ?: '/',
-                'domain' => $params['domain'] ?? '',
-                'secure' => (bool)($params['secure'] ?? false),
-                'httponly' => (bool)($params['httponly'] ?? true),
-                'samesite' => $params['samesite'] ?? 'Lax',
-            ]);
+            $cookieName = session_name();
+            if (is_string($cookieName) && $cookieName !== '') {
+                setcookie($cookieName, '', [
+                    'expires' => time() - 42000,
+                    'path' => $params['path'],
+                    'domain' => $params['domain'],
+                    'secure' => $params['secure'],
+                    'httponly' => $params['httponly'],
+                    'samesite' => $params['samesite'],
+                ]);
+            }
         }
         session_destroy();
     }
@@ -93,7 +103,7 @@ class Session
         if ($message !== null) {
             self::remove($key);
         }
-        return $message;
+        return is_string($message) ? $message : null;
     }
 
     private static function enforceIdleTimeout(): void
