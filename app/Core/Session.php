@@ -6,8 +6,8 @@ use RuntimeException;
 
 class Session
 {
-    private const DEFAULT_LIFETIME = 28800; // 8 horas
-    private const IDLE_TIMEOUT = 7200; // 2 horas sem atividade
+    private const DEFAULT_LIFETIME = 28800;
+    private const IDLE_TIMEOUT = 7200;
 
     public static function start(): void
     {
@@ -70,7 +70,7 @@ class Session
         if ((bool)ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
             $cookieName = session_name();
-            if (is_string($cookieName) && $cookieName !== '') {
+            if ($cookieName !== false) {
                 setcookie($cookieName, '', [
                     'expires' => time() - 42000,
                     'path' => $params['path'],
