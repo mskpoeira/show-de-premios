@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Database;
+use App\Core\RateLimiter;
 use App\Core\Response;
 use App\Core\View;
 use App\Services\AuditService;
@@ -28,6 +29,11 @@ class AuthController
         $login = trim((string)($_POST['login'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
 
+        if (!RateLimiter::allow(RateLimiter::clientKey('login'), 10, 300)) {
+            AuditService::log('LOGIN_RATE_LIMIT', 'users', null, null, ['login' => $login]);
+            Response::redirect('/login', null, 'Muitas tentativas de acesso. Aguarde alguns minutos e tente novamente.');
+        }
+
         if ($login === '' || $password === '') {
             Response::redirect('/login', null, 'Informe login e senha.');
         }
@@ -38,6 +44,7 @@ class AuthController
         }
 
         usleep(300000);
+        AuditService::log('LOGIN_FAILED', 'users', null, null, ['login' => $login]);
         Response::redirect('/login', null, 'Login ou senha incorretos.');
     }
 
@@ -58,7 +65,8 @@ class AuthController
 
         View::render('auth/setup', [
             'title' => 'Instalação Inicial — Show de Prêmios',
-            'setupTokenRequired' => trim((string)getenv('APP_SETUP_TOKEN')) !== '',
+            'setupTokenRequired' => true,
+            'setupConfigured' => trim((string)getenv('APP_SETUP_TOKEN')) !== '',
         ], false);
     }
 
@@ -68,12 +76,19 @@ class AuthController
             Response::redirect('/login', null, 'O sistema já possui administrador cadastrado.');
         }
 
+        if (!RateLimiter::allow(RateLimiter::clientKey('setup'), 8, 600)) {
+            Response::redirect('/setup', null, 'Muitas tentativas de instalação. Aguarde alguns minutos e tente novamente.');
+        }
+
         $expectedSetupToken = trim((string)getenv('APP_SETUP_TOKEN'));
-        if ($expectedSetupToken !== '') {
-            $provided = trim((string)($_POST['setup_token'] ?? ''));
-            if ($provided === '' || !hash_equals($expectedSetupToken, $provided)) {
-                Response::redirect('/setup', null, 'Token de instalação inválido.');
-            }
+        if ($expectedSetupToken === '') {
+            error_log('[Setup] APP_SETUP_TOKEN ausente. Criação do administrador Master bloqueada.');
+            Response::redirect('/setup', null, 'Instalação bloqueada: o token de instalação ainda não foi configurado no servidor.');
+        }
+
+        $provided = trim((string)($_POST['setup_token'] ?? ''));
+        if ($provided === '' || !hash_equals($expectedSetupToken, $provided)) {
+            Response::redirect('/setup', null, 'Token de instalação inválido.');
         }
 
         $name = trim((string)($_POST['name'] ?? ''));
