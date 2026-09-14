@@ -4,16 +4,17 @@ namespace App\Core;
 
 class Response
 {
-    public static function json(array $data, int $statusCode = 200): void
+    /** @param array<mixed> $data */
+    public static function json(array $data, int $statusCode = 200): never
     {
         http_response_code($statusCode);
         header('Content-Type: application/json; charset=utf-8');
         header('X-Content-Type-Options: nosniff');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
         exit;
     }
 
-    public static function redirect(string $path, ?string $success = null, ?string $error = null): void
+    public static function redirect(string $path, ?string $success = null, ?string $error = null): never
     {
         if ($success) {
             Session::setFlash('success', $success);
