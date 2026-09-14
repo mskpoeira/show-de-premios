@@ -1,5 +1,4 @@
 Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios/phpstan.neon.
-::error file=app/Controllers/CashController.php,line=88,col=0::Ternary operator condition is always true.
 ::error file=app/Controllers/DashboardController.php,line=13,col=0::Method App\Controllers\DashboardController::index() has no return type specified.
 ::error file=app/Controllers/OnlineSalesController.php,line=303,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/OnlineSalesController.php,line=306,col=0::Cannot call method fetch() on PDOStatement|false.
@@ -27,13 +26,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
 ::error file=database/Migrations.php,line=337,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=database/Migrations.php,line=349,col=0::Cannot call method fetchAll() on PDOStatement|false.
 ::error file=database/Migrations.php,line=364,col=0::Cannot call method fetchAll() on PDOStatement|false.
- ------ -------------------------------------------- 
-  Line   app/Controllers/CashController.php          
- ------ -------------------------------------------- 
-  88     Ternary operator condition is always true.  
-         🪪  ternary.alwaysTrue                      
- ------ -------------------------------------------- 
-
  ------ ------------------------------------------------------------------- 
   Line   app/Controllers/DashboardController.php                            
  ------ ------------------------------------------------------------------- 
@@ -179,6 +171,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          🪪  method.nonObject                                     
  ------ --------------------------------------------------------- 
 
- [ERROR] Found 28 errors                                                        
+ [ERROR] Found 27 errors                                                        
 
 PHPStan exit code: 1
