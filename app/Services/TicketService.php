@@ -7,67 +7,62 @@ use PDO;
 
 class TicketService
 {
-    /**
-     * Gera um token seguro de 128 bits de entropia (32 caracteres hexadecimais)
-     */
     public static function generateSecureToken(): string
     {
-        return bin2hex(random_bytes(16));
+        return bin2hex(random_bytes(32)); // 256 bits
     }
 
-    /**
-     * Gera um código curto de conferência manual no formato XXXX-XXXX (ex: K7P4-X2MQ)
-     */
     public static function generateCheckCode(): string
     {
-        // Conjunto de caracteres legíveis evitando confusões visuais (0, O, 1, I)
         $chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-        $p1 = '';
-        $p2 = '';
+        $parts = ['', ''];
         for ($i = 0; $i < 4; $i++) {
-            $p1 .= $chars[random_int(0, strlen($chars) - 1)];
-            $p2 .= $chars[random_int(0, strlen($chars) - 1)];
+            $parts[0] .= $chars[random_int(0, strlen($chars) - 1)];
+            $parts[1] .= $chars[random_int(0, strlen($chars) - 1)];
         }
-        return $p1 . '-' . $p2;
+        return $parts[0] . '-' . $parts[1];
     }
 
-    /**
-     * Obtém o próximo número de controle sequencial e formatado (ex: JDA-0001)
-     * Utiliza transação e lock para evitar duplicidade simultânea
-     */
     public static function getNextSequenceNumber(int $batchId, PDO $pdo): array
     {
-        $stmtBatch = $pdo->prepare("SELECT prefix, current_sequence, end_sequence FROM event_batches WHERE id = ?");
-        $stmtBatch->execute([$batchId]);
-        $batch = $stmtBatch->fetch(PDO::FETCH_ASSOC);
-
+        $stmt = $pdo->prepare("SELECT prefix, current_sequence, end_sequence FROM event_batches WHERE id = ?");
+        $stmt->execute([$batchId]);
+        $batch = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$batch) {
-            throw new \Exception("Lote de cartelas não encontrado.");
+            throw new \RuntimeException('Lote de cartelas não encontrado.');
         }
 
-        $nextSeq = (int)$batch['current_sequence'] + 1;
-        if ($nextSeq > (int)$batch['end_sequence']) {
-            throw new \Exception("O lote atingiu a capacidade máxima de numeração (" . $batch['end_sequence'] . "). Crie um novo lote com outro prefixo.");
+        $prefix = strtoupper(trim((string)$batch['prefix']));
+        if (!preg_match('/^[A-Z]{3}$/', $prefix)) {
+            throw new \RuntimeException('O prefixo do lote deve conter exatamente 3 letras.');
         }
 
-        // Atualiza a sequência no lote e marca como bloqueado para alterações estruturais
-        $stmtUpdate = $pdo->prepare("UPDATE event_batches SET current_sequence = ?, is_locked = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $stmtUpdate->execute([$nextSeq, $batchId]);
+        $stmtUpdate = $pdo->prepare("
+            UPDATE event_batches
+            SET current_sequence = current_sequence + 1,
+                is_locked = 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND current_sequence < end_sequence
+        ");
+        $stmtUpdate->execute([$batchId]);
+        if ($stmtUpdate->rowCount() !== 1) {
+            throw new \RuntimeException('O lote atingiu sua capacidade máxima. Crie ou selecione o próximo lote/prefixo.');
+        }
 
-        $prefix = $batch['prefix'];
-        $formattedNumber = sprintf("%s-%04d", $prefix, $nextSeq);
+        $stmtCurrent = $pdo->prepare("SELECT current_sequence FROM event_batches WHERE id = ?");
+        $stmtCurrent->execute([$batchId]);
+        $sequence = (int)$stmtCurrent->fetchColumn();
+        if ($sequence < 1 || $sequence > 9999) {
+            throw new \RuntimeException('Sequência de cartela fora do intervalo permitido (0001–9999).');
+        }
 
         return [
-            'sequence_number' => $nextSeq,
+            'sequence_number' => $sequence,
             'prefix' => $prefix,
-            'ticket_number' => $formattedNumber
+            'ticket_number' => sprintf('%s-%04d', $prefix, $sequence),
         ];
     }
 
-    /**
-     * Gera uma grade clássica de Bingo 75 Pedras 5x5
-     * B: 1-15, I: 16-30, N: 31-45 (centro livre), G: 46-60, O: 61-75
-     */
     public static function generateBingo75Matrix(bool $centerFree = true): array
     {
         $ranges = [
@@ -75,44 +70,32 @@ class TicketService
             'I' => range(16, 30),
             'N' => range(31, 45),
             'G' => range(46, 60),
-            'O' => range(61, 75)
+            'O' => range(61, 75),
         ];
-
         $columns = [];
-        foreach ($ranges as $col => $nums) {
-            shuffle($nums);
-            $columns[$col] = array_slice($nums, 0, 5);
+        foreach ($ranges as $column => $numbers) {
+            shuffle($numbers);
+            $columns[$column] = array_slice($numbers, 0, 5);
         }
 
         $matrix = [];
         $letters = ['B', 'I', 'N', 'G', 'O'];
-
         for ($row = 1; $row <= 5; $row++) {
-            for ($colIdx = 0; $colIdx < 5; $colIdx++) {
-                $letter = $letters[$colIdx];
-                $isCenter = ($row === 3 && $colIdx === 2);
-                $val = $columns[$letter][$row - 1];
-
-                if ($isCenter && $centerFree) {
-                    $val = 0; // Centro livre
-                }
-
+            for ($col = 0; $col < 5; $col++) {
+                $letter = $letters[$col];
+                $isCenter = $row === 3 && $col === 2;
                 $matrix[] = [
                     'column_letter' => $letter,
                     'row_index' => $row,
-                    'col_index' => $colIdx + 1,
-                    'number_value' => $val,
-                    'is_center' => $isCenter ? 1 : 0
+                    'col_index' => $col + 1,
+                    'number_value' => ($isCenter && $centerFree) ? 0 : $columns[$letter][$row - 1],
+                    'is_center' => $isCenter ? 1 : 0,
                 ];
             }
         }
-
         return $matrix;
     }
 
-    /**
-     * Cria e persiste uma nova cartela para um comprador/pedido
-     */
     public static function createTicket(
         int $eventId,
         int $batchId,
@@ -121,60 +104,42 @@ class TicketService
         string $status = 'RESERVED',
         ?PDO $pdo = null
     ): array {
-        $shouldCommit = false;
+        $ownTransaction = false;
         if ($pdo === null) {
             $pdo = Database::getConnection();
             $pdo->beginTransaction();
-            $shouldCommit = true;
+            $ownTransaction = true;
         }
 
         try {
-            $seqData = self::getNextSequenceNumber($batchId, $pdo);
+            $seq = self::getNextSequenceNumber($batchId, $pdo);
             $checkCode = self::generateCheckCode();
             $secureToken = self::generateSecureToken();
 
             $stmtTicket = $pdo->prepare("
                 INSERT INTO tickets (
                     event_id, batch_id, buyer_id, order_id, ticket_number, sequence_number,
-                    prefix, check_code, secure_token, grid_type, status, print_count, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '5x5', ?, 0, CURRENT_TIMESTAMP)
+                    prefix, check_code, secure_token, grid_type, status, print_count, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '5x5', ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             ");
-
             $stmtTicket->execute([
-                $eventId,
-                $batchId,
-                $buyerId,
-                $orderId,
-                $seqData['ticket_number'],
-                $seqData['sequence_number'],
-                $seqData['prefix'],
-                $checkCode,
-                $secureToken,
-                $status
+                $eventId, $batchId, $buyerId, $orderId, $seq['ticket_number'], $seq['sequence_number'],
+                $seq['prefix'], $checkCode, $secureToken, $status,
             ]);
-
             $ticketId = (int)$pdo->lastInsertId();
 
-            // Verifica o tipo de grade do lote
             $stmtBatch = $pdo->prepare("SELECT batch_type, matrix_template_json FROM event_batches WHERE id = ?");
             $stmtBatch->execute([$batchId]);
-            $batchRow = $stmtBatch->fetch(PDO::FETCH_ASSOC);
+            $batch = $stmtBatch->fetch(PDO::FETCH_ASSOC);
+            $matrix = ($batch && $batch['batch_type'] === 'FIXED_GRID' && !empty($batch['matrix_template_json']))
+                ? (json_decode((string)$batch['matrix_template_json'], true) ?: self::generateBingo75Matrix(true))
+                : self::generateBingo75Matrix(true);
 
-            if ($batchRow && $batchRow['batch_type'] === 'FIXED_GRID' && !empty($batchRow['matrix_template_json'])) {
-                $matrix = json_decode($batchRow['matrix_template_json'], true);
-            } else {
-                $matrix = self::generateBingo75Matrix(true);
-            }
-
-            // Insere os números da cartela
             $stmtNum = $pdo->prepare("
-                INSERT INTO ticket_numbers (
-                    ticket_id, number_value, column_letter, row_index, col_index, is_center, is_hit
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO ticket_numbers (ticket_id, number_value, column_letter, row_index, col_index, is_center, is_hit, hit_at_call_id)
+                VALUES (?, ?, ?, ?, ?, ?, 0, NULL)
             ");
-
             foreach ($matrix as $cell) {
-                $isHit = ($cell['is_center'] === 1) ? 1 : 0; // Centro livre já começa marcado
                 $stmtNum->execute([
                     $ticketId,
                     $cell['number_value'],
@@ -182,93 +147,68 @@ class TicketService
                     $cell['row_index'],
                     $cell['col_index'],
                     $cell['is_center'],
-                    $isHit
                 ]);
             }
 
-            // Atualiza o total gerado no lote
-            $pdo->prepare("UPDATE event_batches SET total_generated = total_generated + 1 WHERE id = ?")->execute([$batchId]);
+            $pdo->prepare("UPDATE event_batches SET total_generated = total_generated + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+                ->execute([$batchId]);
 
-            // Se a cartela for emitida como VÁLIDA, inicializa o ticket_game_state para draws abertos
             if ($status === 'VALID') {
                 self::initGameStateForTicket($ticketId, $eventId, $pdo);
             }
 
-            if ($shouldCommit) {
+            if ($ownTransaction) {
                 $pdo->commit();
             }
 
             return [
                 'id' => $ticketId,
-                'ticket_number' => $seqData['ticket_number'],
+                'ticket_number' => $seq['ticket_number'],
                 'check_code' => $checkCode,
                 'secure_token' => $secureToken,
                 'status' => $status,
-                'matrix' => $matrix
+                'matrix' => $matrix,
             ];
         } catch (\Throwable $e) {
-            if ($shouldCommit && $pdo->inTransaction()) {
+            if ($ownTransaction && $pdo->inTransaction()) {
                 $pdo->rollBack();
             }
             throw $e;
         }
     }
 
-    /**
-     * Inicializa o estado de jogo da cartela para sorteios em andamento
-     */
     public static function initGameStateForTicket(int $ticketId, int $eventId, PDO $pdo): void
     {
-        $stmtDraws = $pdo->prepare("SELECT id FROM draws WHERE event_id = ? AND status IN ('OPEN', 'IN_PROGRESS')");
+        $stmtDraws = $pdo->prepare("SELECT id FROM draws WHERE event_id = ? AND status IN ('OPEN','IN_PROGRESS','CHECKING')");
         $stmtDraws->execute([$eventId]);
-        $draws = $stmtDraws->fetchAll(PDO::FETCH_COLUMN);
+        $drawIds = $stmtDraws->fetchAll(PDO::FETCH_COLUMN);
 
-        $stmtInsertState = $pdo->prepare("
-            INSERT OR IGNORE INTO ticket_game_state (draw_id, ticket_id, hits_count, needed_count, remaining_count, is_winner)
-            VALUES (?, ?, 0, 24, 24, 0)
-        ");
-
-        foreach ($draws as $drawId) {
-            $stmtInsertState->execute([$drawId, $ticketId]);
+        $stmtExists = $pdo->prepare("SELECT id FROM ticket_game_state WHERE draw_id = ? AND ticket_id = ? LIMIT 1");
+        $stmtInsert = $pdo->prepare("INSERT INTO ticket_game_state (draw_id, ticket_id, hits_count, needed_count, remaining_count, is_winner, updated_at) VALUES (?, ?, 0, 24, 24, 0, CURRENT_TIMESTAMP)");
+        foreach ($drawIds as $drawId) {
+            $stmtExists->execute([(int)$drawId, $ticketId]);
+            if (!$stmtExists->fetchColumn()) {
+                $stmtInsert->execute([(int)$drawId, $ticketId]);
+            }
         }
     }
 
-    /**
-     * Registra reimpressão de uma cartela (preservando token, número e código)
-     */
     public static function recordPrint(int $ticketId, ?int $userId = null, ?string $ip = null): void
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("
-            UPDATE tickets 
-            SET print_count = print_count + 1, last_printed_at = CURRENT_TIMESTAMP 
-            WHERE id = ?
-        ");
-        $stmt->execute([$ticketId]);
-
-        $stmtLog = $pdo->prepare("
-            INSERT INTO ticket_prints (ticket_id, user_id, ip_address, printed_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-        ");
-        $stmtLog->execute([$ticketId, $userId, $ip]);
+        $pdo->prepare("UPDATE tickets SET print_count = print_count + 1, last_printed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+            ->execute([$ticketId]);
+        $pdo->prepare("INSERT INTO ticket_prints (ticket_id, user_id, ip_address, printed_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)")
+            ->execute([$ticketId, $userId, $ip]);
     }
 
-    /**
-     * Mascara CPF para exibição segura (ex: ***.456.789-**)
-     */
     public static function maskCpf(?string $cpf): string
     {
         if (!$cpf) return 'Não informado';
         $clean = preg_replace('/\D/', '', $cpf);
-        if (strlen($clean) === 11) {
-            return '***.' . substr($clean, 3, 3) . '.' . substr($clean, 6, 3) . '-**';
-        }
-        return '***.***.***-**';
+        return strlen($clean) === 11 ? '***.' . substr($clean, 3, 3) . '.' . substr($clean, 6, 3) . '-**' : '***.***.***-**';
     }
 
-    /**
-     * Mascara Telefone para exibição segura (ex: +55 (12) 9****-2387)
-     */
     public static function maskPhone(?string $phone): string
     {
         if (!$phone) return 'Não informado';
@@ -276,42 +216,37 @@ class TicketService
         if (strlen($clean) >= 10) {
             $last4 = substr($clean, -4);
             $ddd = substr($clean, -11, 2);
-            return "+55 ({$ddd}) 9****-{$last4}";
+            return "+55 ({$ddd}) *****-{$last4}";
         }
         return '(**) *****-****';
     }
 
-    /**
-     * Busca dados completos de uma cartela por token ou ID (para impressão)
-     */
-    public static function getTicketForPrint(string $tokenOrNumber): ?array
+    public static function getTicketForPrint(string $secureToken): ?array
     {
+        if (!preg_match('/^[a-f0-9]{64}$/i', $secureToken)) {
+            return null;
+        }
+
         $pdo = Database::getConnection();
         $stmt = $pdo->prepare("
-            SELECT t.*, b.name as buyer_name, b.cpf as buyer_cpf, b.phone as buyer_phone, b.email as buyer_email,
-                   e.name as event_name, e.event_date, e.location as event_location, e.description as event_description
+            SELECT t.*, b.name AS buyer_name, b.cpf AS buyer_cpf, b.phone AS buyer_phone, b.email AS buyer_email,
+                   e.name AS event_name, e.event_date, e.location AS event_location, e.description AS event_description
             FROM tickets t
             JOIN events e ON e.id = t.event_id
             LEFT JOIN buyers b ON b.id = t.buyer_id
-            WHERE t.secure_token = ? OR t.ticket_number = ?
+            WHERE t.secure_token = ?
+            LIMIT 1
         ");
-        $stmt->execute([$tokenOrNumber, $tokenOrNumber]);
+        $stmt->execute([$secureToken]);
         $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$ticket) return null;
 
-        // Busca a matriz
-        $stmtNums = $pdo->prepare("
-            SELECT * FROM ticket_numbers 
-            WHERE ticket_id = ? 
-            ORDER BY row_index ASC, col_index ASC
-        ");
-        $stmtNums->execute([$ticket['id']]);
+        $stmtNums = $pdo->prepare("SELECT * FROM ticket_numbers WHERE ticket_id = ? ORDER BY row_index ASC, col_index ASC");
+        $stmtNums->execute([(int)$ticket['id']]);
         $ticket['numbers'] = $stmtNums->fetchAll(PDO::FETCH_ASSOC);
 
-        // Busca prêmios do evento
         $stmtPrizes = $pdo->prepare("SELECT * FROM prizes WHERE event_id = ? AND active = 1 ORDER BY order_num ASC");
-        $stmtPrizes->execute([$ticket['event_id']]);
+        $stmtPrizes->execute([(int)$ticket['event_id']]);
         $ticket['prizes'] = $stmtPrizes->fetchAll(PDO::FETCH_ASSOC);
 
         return $ticket;
