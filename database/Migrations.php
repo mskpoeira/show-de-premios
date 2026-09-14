@@ -3,6 +3,7 @@
 namespace Database;
 
 use App\Core\Database;
+use App\Core\StrictPDO;
 use PDO;
 
 class Migrations
@@ -46,7 +47,7 @@ class Migrations
         return $driver === 'sqlite' ? 'TEXT' : 'TIMESTAMP';
     }
 
-    private static function createCoreTables(PDO $pdo, string $driver): void
+    private static function createCoreTables(StrictPDO $pdo, string $driver): void
     {
         $id = self::idType($driver);
         $time = self::timeType($driver);
@@ -121,7 +122,7 @@ class Migrations
         )");
     }
 
-    private static function createModernTables(PDO $pdo, string $driver): void
+    private static function createModernTables(StrictPDO $pdo, string $driver): void
     {
         $id = self::idType($driver);
         $time = self::timeType($driver);
@@ -254,7 +255,7 @@ class Migrations
         )");
     }
 
-    private static function applyAdditiveColumns(PDO $pdo, string $driver): void
+    private static function applyAdditiveColumns(StrictPDO $pdo, string $driver): void
     {
         $roundColumns = [
             'round_name' => 'VARCHAR(100) NULL', 'card_color' => 'VARCHAR(100) NULL', 'prizes_count' => 'INTEGER DEFAULT 2',
@@ -284,7 +285,7 @@ class Migrations
         } catch (\Throwable $e) {}
     }
 
-    private static function createIndexes(PDO $pdo, string $driver): void
+    private static function createIndexes(StrictPDO $pdo, string $driver): void
     {
         $indexes = [
             "CREATE UNIQUE INDEX IF NOT EXISTS uq_draw_stones_number ON draw_stones(draw_id, number_value)",
@@ -309,7 +310,7 @@ class Migrations
         }
     }
 
-    private static function seedDefaults(PDO $pdo): void
+    private static function seedDefaults(StrictPDO $pdo): void
     {
         $defaults = [
             'single_quantity' => ['1','int'], 'single_price' => ['2.00','decimal'],
@@ -342,7 +343,7 @@ class Migrations
         }
     }
 
-    private static function migrateLegacyDrawHistory(PDO $pdo, string $driver): void
+    private static function migrateLegacyDrawHistory(StrictPDO $pdo, string $driver): void
     {
         if (self::tableExists($pdo, 'called_numbers')) {
             try {
@@ -386,7 +387,7 @@ class Migrations
         }
     }
 
-    private static function ensureColumn(PDO $pdo, string $table, string $column, string $definition): void
+    private static function ensureColumn(StrictPDO $pdo, string $table, string $column, string $definition): void
     {
         try {
             $pdo->exec("ALTER TABLE {$table} ADD COLUMN {$column} {$definition}");
@@ -395,7 +396,7 @@ class Migrations
         }
     }
 
-    private static function tableExists(PDO $pdo, string $table): bool
+    private static function tableExists(StrictPDO $pdo, string $table): bool
     {
         try {
             $pdo->query("SELECT 1 FROM {$table} LIMIT 1");
@@ -405,7 +406,7 @@ class Migrations
         }
     }
 
-    private static function recordVersion(PDO $pdo, string $driver): void
+    private static function recordVersion(StrictPDO $pdo, string $driver): void
     {
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM migration_history WHERE version=?");
         $stmt->execute([self::VERSION]);

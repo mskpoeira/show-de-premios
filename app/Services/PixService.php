@@ -284,18 +284,18 @@ class PixService
     {
         $pdo = Database::getConnection();
         $stmt = $pdo->query("SELECT key, value FROM settings WHERE key LIKE 'pix_%'");
-        $settings = $stmt ? $stmt->fetchAll(PDO::FETCH_KEY_PAIR) : [];
+        $settings = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
         $rawKey = trim($settings['pix_key'] ?? '');
-        $key = !empty($rawKey) ? $rawKey : 'mskpoeira@gmail.com';
+        $key = $rawKey;
         $type = trim($settings['pix_key_type'] ?? 'EMAIL');
         $receiver = trim($settings['pix_receiver_name'] ?? '') ?: 'Show de Premios';
         $city = trim($settings['pix_receiver_city'] ?? '') ?: 'SAO PAULO';
         $desc = trim($settings['pix_description'] ?? '') ?: 'Show de Premios';
         $bannerTitle = trim($settings['pix_banner_title'] ?? '') ?: 'PAGUE COM PIX DIRETO DO SEU LUGAR';
 
-        $rawShow = $settings['pix_show_on_telao'] ?? 'true';
-        $show = !in_array(strtolower((string)$rawShow), ['false', '0', 'no', 'off'], true);
+        $rawShow = $settings['pix_show_on_telao'] ?? 'false';
+        $show = $key !== '' && !in_array(strtolower((string)$rawShow), ['false', '0', 'no', 'off'], true);
 
         $normalizedKey = self::normalizePixKey($key, $type);
         $payload = !empty($normalizedKey) ? self::createPayload($key, $receiver, $city, $desc, null, '***', $type) : '';

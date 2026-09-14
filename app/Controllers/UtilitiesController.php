@@ -29,7 +29,7 @@ class UtilitiesController
 
         $pdo = Database::getConnection();
         $stmtSettings = $pdo->query("SELECT key, value FROM settings");
-        $settings = $stmtSettings ? $stmtSettings->fetchAll(\PDO::FETCH_KEY_PAIR) : [];
+        $settings = $stmtSettings->fetchAll(\PDO::FETCH_KEY_PAIR);
 
         View::render('utilities/simulator', [
             'title' => 'Simulador de Premiações & Vendas — Show de Prêmios',

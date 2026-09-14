@@ -304,6 +304,9 @@ class ReportService
         header('Content-Disposition: attachment; filename="' . $filename . '"');
 
         $output = fopen('php://output', 'w');
+        if ($output === false) {
+            throw new \RuntimeException('Não foi possível abrir o fluxo de exportação CSV.');
+        }
         // UTF-8 BOM for Excel pt-BR
         fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 

@@ -351,9 +351,6 @@ class RoundController
         // Define status final: preserva o status atual da rodada ou aceita o status solicitado
         $requestedStatus = trim($_POST['status'] ?? '');
         $finalStatus = in_array($requestedStatus, $allowedStatuses, true) ? $requestedStatus : $round['status'];
-        if (!in_array($finalStatus, $allowedStatuses, true)) {
-            $finalStatus = 'OPEN';
-        }
 
         $pdo->beginTransaction();
 
@@ -491,8 +488,7 @@ class RoundController
                 'OPEN' => 'Rodada aberta (vendas ativas)',
                 'IN_PROGRESS' => 'Rodada em andamento (cantoria)',
                 'PAUSED' => 'Rodada pausada',
-                'CHECKING' => 'Rodada em conferência',
-                default => $finalStatus
+                'CHECKING' => 'Rodada em conferência'
             };
             $successMsg = "Vendas e premiações da Rodada {$finalRoundNumber} salvas com sucesso! ({$statusText})";
 
@@ -632,7 +628,7 @@ class RoundController
             'CHECKING' => 'Em conferência',
             'CLOSED' => 'Fechada'
         ];
-        $msg = "Status da rodada alterado para: " . ($statusLabels[$newStatus] ?? $newStatus);
+        $msg = "Status da rodada alterado para: " . $statusLabels[$newStatus];
 
         $isJson = (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'))
                || (!empty($_SERVER['CONTENT_TYPE']) && str_contains($_SERVER['CONTENT_TYPE'], 'application/json'))

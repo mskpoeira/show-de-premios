@@ -56,8 +56,8 @@ class SettingsController
             foreach(['sales','rounds','cash_movements','cash_closings','operation_days','sellers','audit_logs','orders','tickets','buyers'] as $table) {
                 try{$tableCounts[$table]=(int)$pdo->query("SELECT COUNT(*) FROM {$table}")->fetchColumn();}catch(\Throwable $e){$tableCounts[$table]=0;}
             }
-            $tableCounts['cash']=($tableCounts['cash_movements']??0)+($tableCounts['cash_closings']??0);
-            $tableCounts['digital_orders']=$tableCounts['orders']??0;
+            $tableCounts['cash']=$tableCounts['cash_movements']+$tableCounts['cash_closings'];
+            $tableCounts['digital_orders']=$tableCounts['orders'];
             $totalPricing=(int)$pdo->query('SELECT COUNT(*) FROM pricing_rules')->fetchColumn();
             $tableCounts['pricing_history']=max(0,$totalPricing-1);
             $currentId=(int)Auth::id();
@@ -77,7 +77,7 @@ class SettingsController
 
         $pdo=Database::getConnection();$pdo->beginTransaction();
         try {
-            $dayBefore=date('Y-m-d',strtotime($effective.' -1 day'));
+            $dayBefore=(new \DateTimeImmutable($effective))->modify('-1 day')->format('Y-m-d');
             $pdo->prepare('UPDATE pricing_rules SET effective_to=? WHERE effective_to IS NULL AND effective_from<?')->execute([$dayBefore,$effective]);
             $stmt=$pdo->prepare('INSERT INTO pricing_rules (effective_from,single_quantity,single_price,bundle_quantity,bundle_price,active) VALUES (?,1,?,?,?,1)');
             $stmt->execute([$effective,$single,$bundleQty,$bundle]);$id=(int)$pdo->lastInsertId();

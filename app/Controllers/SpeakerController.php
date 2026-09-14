@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Database;
 use App\Core\Response;
+use App\Core\StrictPDO;
 use App\Core\View;
 use App\Services\AuditService;
 use App\Services\GameEngineService;
@@ -273,13 +274,13 @@ class SpeakerController
         return [(int)$draw['id'],(int)$event['id']];
     }
 
-    private function activeEvent(PDO $pdo): ?array
+    private function activeEvent(StrictPDO $pdo): ?array
     {
         $stmt=$pdo->query("SELECT * FROM events WHERE status='ACTIVE' ORDER BY id DESC LIMIT 1");
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    private function findRound(PDO $pdo, int $roundId): ?array
+    private function findRound(StrictPDO $pdo, int $roundId): ?array
     {
         if ($roundId>0) {
             $stmt=$pdo->prepare("SELECT r.*,d.status AS day_status,d.operation_date FROM rounds r JOIN operation_days d ON d.id=r.operation_day_id WHERE r.id=? LIMIT 1");

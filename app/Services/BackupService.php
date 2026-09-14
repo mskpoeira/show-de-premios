@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Core\Auth;
 use App\Core\Database;
+use App\Core\StrictPDO;
 use Database\Migrations;
 use PDO;
 
@@ -98,7 +99,7 @@ class BackupService
             foreach($existing as $table) {
                 $rows=$backup['tables'][$table] ?? null;
                 if (!is_array($rows) || $rows===[]) continue;
-                $columns=array_keys($rows[0]);
+                $columns=array_map('strval',array_keys($rows[0]));
                 if (!$columns) continue;
                 foreach($columns as $column) {
                     if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/',$column)) throw new \RuntimeException('Coluna inválida no backup.');
@@ -198,7 +199,7 @@ class BackupService
         }
     }
 
-    private static function cleanTables(PDO $pdo,string $driver,array $tables,string $auditAction): array
+    private static function cleanTables(StrictPDO $pdo,string $driver,array $tables,string $auditAction): array
     {
         self::setForeignKeys($pdo,$driver,false);
         $pdo->beginTransaction();
@@ -246,12 +247,12 @@ class BackupService
         foreach(array_slice($files,0,count($files)-self::AUTO_RETENTION) as $file) @unlink($file);
     }
 
-    private static function tableExists(PDO $pdo,string $table): bool
+    private static function tableExists(StrictPDO $pdo,string $table): bool
     {
         try { $pdo->query("SELECT 1 FROM {$table} LIMIT 1"); return true; } catch (\Throwable $e) { return false; }
     }
 
-    private static function setForeignKeys(PDO $pdo,string $driver,bool $enabled): void
+    private static function setForeignKeys(StrictPDO $pdo,string $driver,bool $enabled): void
     {
         try {
             if ($driver==='sqlite') $pdo->exec('PRAGMA foreign_keys = '.($enabled?'ON':'OFF'));

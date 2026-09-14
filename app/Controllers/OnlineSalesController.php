@@ -6,6 +6,7 @@ use App\Core\Auth;
 use App\Core\Database;
 use App\Core\RateLimiter;
 use App\Core\Response;
+use App\Core\StrictPDO;
 use App\Core\View;
 use App\Services\AuditService;
 use App\Services\EmailService;
@@ -296,7 +297,7 @@ class OnlineSalesController
         }
     }
 
-    private function activeDigitalEvent(PDO $pdo): ?array
+    private function activeDigitalEvent(StrictPDO $pdo): ?array
     {
         try {
             $stmt = $pdo->query("SELECT * FROM events WHERE status = 'ACTIVE' AND COALESCE(modality, 'HYBRID') IN ('DIGITAL_ONLY','HYBRID') ORDER BY id DESC LIMIT 1");
