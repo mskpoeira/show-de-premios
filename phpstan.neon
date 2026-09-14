@@ -1,0 +1,12 @@
+parameters:
+    level: 7
+    paths:
+        - app
+        - database
+        - index.php
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # Dívida estritamente documental: arrays dinâmicos de resultados SQL/HTTP.
+        # Erros de lógica, unions incorretas, recursos false e chamadas inválidas continuam bloqueando o CI.
+        - '#has no value type specified in iterable type array#'
+        - '#type has no value type specified in iterable type array#'
