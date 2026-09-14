@@ -1,12 +1,71 @@
 <?php
 use App\Core\View;
-$calledSet=array_fill_keys(array_map('intval',$called_numbers ?? []),true);
-$statusLabels=['OPEN'=>'🟢 RODADA ABERTA','IN_PROGRESS'=>'⚡ SORTEIO EM ANDAMENTO','PAUSED'=>'⏸️ SORTEIO PAUSADO','CHECKING'=>'🔔 CONFERÊNCIA EM ANDAMENTO','CLOSED'=>'🏁 RODADA ENCERRADA','HOMOLOGATED'=>'🏁 RODADA ENCERRADA','NO_ROUND'=>'⏳ AGUARDANDO RODADA'];
+
+$calledSet = array_fill_keys(array_map('intval', $called_numbers ?? []), true);
+$statusLabels = [
+    'OPEN' => '🟢 RODADA ABERTA',
+    'IN_PROGRESS' => '⚡ SORTEIO EM ANDAMENTO',
+    'PAUSED' => '⏸️ SORTEIO PAUSADO',
+    'CHECKING' => '🔔 CONFERÊNCIA EM ANDAMENTO',
+    'CLOSED' => '🏁 RODADA ENCERRADA',
+    'HOMOLOGATED' => '🏁 RODADA ENCERRADA',
+    'NO_ROUND' => '⏳ AGUARDANDO RODADA',
+];
+$publicWinners = is_array($winners ?? null) ? $winners : [];
+$winnerCodes = array_map(static fn(array $winner): string => (string)($winner['ticket_code'] ?? ''), $publicWinners);
+$winnerPrize = $publicWinners[0]['prize_title'] ?? ($prize['title'] ?? 'Prêmio');
+$winnerStatus = $publicWinners[0]['status_label'] ?? 'EM CONFERÊNCIA';
 ?>
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title><?= View::e($system_title ?? 'Show de Prêmios') ?> — Telão</title>
-<style>*{box-sizing:border-box}html,body{margin:0;height:100%;background:#070b14;color:#fff;font-family:Arial,sans-serif}body{display:flex;flex-direction:column;padding:1.2vh 1.4vw;gap:1vh}.top{display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid #334155;padding-bottom:.8vh}.title{font-weight:900;font-size:clamp(1.2rem,2.5vw,2.5rem);color:#fbbf24}.clock{font-weight:900;font-size:clamp(1.2rem,2.4vw,2.3rem);color:#38bdf8}.meta{display:flex;justify-content:center;gap:.7rem;flex-wrap:wrap}.pill{padding:.45rem .9rem;border-radius:999px;background:#1e293b;border:1px solid #475569;font-weight:800;font-size:clamp(.8rem,1.2vw,1.15rem)}.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,24vw);gap:1.2vw;flex:1;min-height:0}.board{display:grid;grid-template-columns:repeat(15,1fr);gap:.35vw;align-content:center}.ball{aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #334155;background:#111827;color:#64748b;font-weight:900;font-size:clamp(.65rem,1.3vw,1.2rem)}.ball.called{background:#2563eb;border-color:#93c5fd;color:#fff;box-shadow:0 0 12px rgba(59,130,246,.5)}.side{display:flex;flex-direction:column;gap:1vh;justify-content:center}.last{border:2px solid #3b82f6;border-radius:20px;padding:1.2rem;text-align:center;background:#0f172a}.last-number{font-size:clamp(4rem,10vw,9rem);font-weight:1000;line-height:.9}.last-letter{font-size:clamp(1.5rem,3vw,3rem);font-weight:900;color:#93c5fd}.prize,.pix{background:#111827;border:1px solid #334155;border-radius:14px;padding:1rem;text-align:center}.prize strong{display:block;color:#fbbf24;font-size:clamp(1.1rem,2vw,1.7rem)}.footer{text-align:center;color:#94a3b8;font-size:.8rem}@media(max-width:900px){.stage{grid-template-columns:1fr}.board{grid-template-columns:repeat(10,1fr)}.side{display:grid;grid-template-columns:1fr 1fr}.last-number{font-size:4rem}}</style></head><body>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><?= View::e($system_title ?? 'Show de Prêmios') ?> — Telão</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#070b14;color:#fff;font-family:Arial,sans-serif}body{display:flex;flex-direction:column;padding:1.2vh 1.4vw;gap:1vh}.top{display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid #334155;padding-bottom:.8vh}.title{font-weight:900;font-size:clamp(1.2rem,2.5vw,2.5rem);color:#fbbf24}.clock{font-weight:900;font-size:clamp(1.2rem,2.4vw,2.3rem);color:#38bdf8}.meta{display:flex;justify-content:center;gap:.7rem;flex-wrap:wrap}.pill{padding:.45rem .9rem;border-radius:999px;background:#1e293b;border:1px solid #475569;font-weight:800;font-size:clamp(.8rem,1.2vw,1.15rem)}.winner-banner{display:none;border:3px solid #fbbf24;border-radius:20px;padding:1.1rem 1.4rem;text-align:center;background:#422006;box-shadow:0 0 26px rgba(251,191,36,.35)}.winner-banner.visible{display:block}.winner-title{font-size:clamp(1.6rem,3.2vw,3rem);font-weight:1000;color:#fde68a;line-height:1}.winner-details{display:flex;justify-content:center;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.65rem;font-size:clamp(1rem,1.8vw,1.55rem);font-weight:900}.winner-code{color:#fff}.winner-status{padding:.35rem .7rem;border-radius:999px;background:#fbbf24;color:#422006}.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,24vw);gap:1.2vw;flex:1;min-height:0}.board{display:grid;grid-template-columns:repeat(15,1fr);gap:.35vw;align-content:center}.ball{aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #334155;background:#111827;color:#64748b;font-weight:900;font-size:clamp(.65rem,1.3vw,1.2rem)}.ball.called{background:#2563eb;border-color:#93c5fd;color:#fff;box-shadow:0 0 12px rgba(59,130,246,.5)}.side{display:flex;flex-direction:column;gap:1vh;justify-content:center}.last{border:2px solid #3b82f6;border-radius:20px;padding:1.2rem;text-align:center;background:#0f172a}.last-number{font-size:clamp(4rem,10vw,9rem);font-weight:1000;line-height:.9}.last-letter{font-size:clamp(1.5rem,3vw,3rem);font-weight:900;color:#93c5fd}.prize,.pix{background:#111827;border:1px solid #334155;border-radius:14px;padding:1rem;text-align:center}.prize strong{display:block;color:#fbbf24;font-size:clamp(1.1rem,2vw,1.7rem)}.footer{text-align:center;color:#94a3b8;font-size:.8rem}@media(max-width:900px){.stage{grid-template-columns:1fr}.board{grid-template-columns:repeat(10,1fr)}.side{display:grid;grid-template-columns:1fr 1fr}.last-number{font-size:4rem}.winner-details{gap:.5rem}}
+</style>
+</head>
+<body>
 <div class="top"><div><div class="title" id="systemTitle"><?= View::e($system_title ?? 'Show de Prêmios') ?></div><div id="eventName"><?= View::e($event['name'] ?? '') ?></div></div><div class="clock" id="clock"><?= View::e($server_time ?? date('H:i:s')) ?></div></div>
-<div class="meta"><span class="pill" id="roundName"><?= View::e($round['round_name'] ?? 'Aguardando rodada') ?></span><span class="pill" id="cardColor" style="<?= empty($round['card_color'])?'display:none':'' ?>"><?= !empty($round['card_color'])?'Cartela '.View::e($round['card_color']):'' ?></span><span class="pill" id="statusLabel"><?= View::e($statusLabels[$round_status] ?? $round_status) ?></span><span class="pill">Chamadas: <span id="totalCalled"><?= (int)($total_called ?? 0) ?></span>/75</span></div>
-<div class="stage"><div class="board" id="board"><?php for($n=1;$n<=75;$n++): ?><div id="ball-<?= $n ?>" class="ball <?= isset($calledSet[$n])?'called':'' ?>"><?= $n ?></div><?php endfor; ?></div><div class="side"><div class="last"><div>ÚLTIMA PEDRA</div><div class="last-letter" id="lastLetter"><?= View::e($last_letter ?? '—') ?></div><div class="last-number" id="lastNumber"><?= $last_called_number ? (int)$last_called_number : '—' ?></div></div><div class="prize"><div>PRÊMIO EM DISPUTA</div><strong id="prizeTitle"><?= View::e($prize['title'] ?? 'Aguardando definição') ?></strong><div id="prizeValue"><?= View::e($prize['value_formatted'] ?? '') ?></div></div><div class="prize"><div>VALOR DAS CARTELAS</div><strong>1 por <?= View::money($single_price ?? 2) ?></strong><div><?= (int)($bundle_qty ?? 3) ?> por <?= View::money($bundle_price ?? 5) ?></div></div><div class="pix" id="pixBox" style="<?= !empty($pix['show'])&&!empty($pix['key'])?'':'display:none;' ?>"><strong><?= View::e($pix['banner'] ?? 'PAGUE COM PIX DIRETO DO SEU LUGAR') ?></strong><div id="pixKey"><?= View::e($pix['key'] ?? '') ?></div><div><?= View::e($pix['receiver'] ?? '') ?></div></div></div></div>
-<div class="footer">Telão público — exibe somente informações oficiais liberadas para o público.</div>
-<script>const statusLabels={OPEN:'🟢 RODADA ABERTA',IN_PROGRESS:'⚡ SORTEIO EM ANDAMENTO',PAUSED:'⏸️ SORTEIO PAUSADO',CHECKING:'🔔 CONFERÊNCIA EM ANDAMENTO',CLOSED:'🏁 RODADA ENCERRADA',HOMOLOGATED:'🏁 RODADA ENCERRADA',NO_ROUND:'⏳ AGUARDANDO RODADA'};function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR')}setInterval(updateClock,1000);function apply(d){document.getElementById('systemTitle').textContent=d.system_title||'Show de Prêmios';document.getElementById('eventName').textContent=d.event?.name||'';document.getElementById('roundName').textContent=d.round?.round_name||'Aguardando rodada';const cc=document.getElementById('cardColor');if(d.round?.card_color){cc.style.display='';cc.textContent='Cartela '+d.round.card_color}else cc.style.display='none';document.getElementById('statusLabel').textContent=statusLabels[d.round_status]||d.round_status||'';document.getElementById('totalCalled').textContent=d.total_called||0;document.getElementById('lastLetter').textContent=d.last_letter||'—';document.getElementById('lastNumber').textContent=d.last_called_number||'—';document.getElementById('prizeTitle').textContent=d.prize?.title||'Aguardando definição';document.getElementById('prizeValue').textContent=d.prize?.value_formatted||'';const set=new Set(d.called_numbers||[]);for(let n=1;n<=75;n++)document.getElementById('ball-'+n)?.classList.toggle('called',set.has(n));const pb=document.getElementById('pixBox');if(d.pix?.show&&d.pix?.key){pb.style.display='';document.getElementById('pixKey').textContent=d.pix.key}else pb.style.display='none'}async function poll(){try{const r=await fetch('/telao/status',{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(j.status==='success')apply(j.data)}catch(e){}}setInterval(poll,2000);poll();</script></body></html>
+<div class="meta"><span class="pill" id="roundName"><?= View::e($round['round_name'] ?? 'Aguardando rodada') ?></span><span class="pill" id="cardColor" style="<?= empty($round['card_color']) ? 'display:none' : '' ?>"><?= !empty($round['card_color']) ? 'Cartela ' . View::e($round['card_color']) : '' ?></span><span class="pill" id="statusLabel"><?= View::e($statusLabels[$round_status] ?? $round_status) ?></span><span class="pill">Chamadas: <span id="totalCalled"><?= (int)($total_called ?? 0) ?></span>/75</span></div>
+<div class="winner-banner <?= !empty($publicWinners) ? 'visible' : '' ?>" id="winnerBanner" aria-live="assertive"><div class="winner-title">🏆 TEMOS CARTELA VENCEDORA 🏆</div><div class="winner-details"><span class="winner-code" id="winnerCodes"><?= View::e(implode(' • ', array_filter($winnerCodes))) ?></span><span id="winnerPrize"><?= View::e((string)$winnerPrize) ?></span><span class="winner-status" id="winnerStatus"><?= View::e((string)$winnerStatus) ?></span></div></div>
+<div class="stage"><div class="board" id="board"><?php for ($n = 1; $n <= 75; $n++): ?><div id="ball-<?= $n ?>" class="ball <?= isset($calledSet[$n]) ? 'called' : '' ?>"><?= $n ?></div><?php endfor; ?></div><div class="side"><div class="last"><div>ÚLTIMA PEDRA</div><div class="last-letter" id="lastLetter"><?= View::e($last_letter ?? '—') ?></div><div class="last-number" id="lastNumber"><?= $last_called_number ? (int)$last_called_number : '—' ?></div></div><div class="prize"><div>PRÊMIO EM DISPUTA</div><strong id="prizeTitle"><?= View::e($prize['title'] ?? 'Aguardando definição') ?></strong><div id="prizeValue"><?= View::e($prize['value_formatted'] ?? '') ?></div></div><div class="prize"><div>VALOR DAS CARTELAS</div><strong>1 por <?= View::money($single_price ?? 2) ?></strong><div><?= (int)($bundle_qty ?? 3) ?> por <?= View::money($bundle_price ?? 5) ?></div></div><div class="pix" id="pixBox" style="<?= !empty($pix['show']) && !empty($pix['key']) ? '' : 'display:none;' ?>"><strong><?= View::e($pix['banner'] ?? 'PAGUE COM PIX DIRETO DO SEU LUGAR') ?></strong><div id="pixKey"><?= View::e($pix['key'] ?? '') ?></div><div id="pixReceiver"><?= View::e($pix['receiver'] ?? '') ?></div></div></div></div>
+<div class="footer">Telão público — somente código da cartela, prêmio e status do ganhador são exibidos; dados pessoais permanecem restritos.</div>
+<script>
+const statusLabels={OPEN:'🟢 RODADA ABERTA',IN_PROGRESS:'⚡ SORTEIO EM ANDAMENTO',PAUSED:'⏸️ SORTEIO PAUSADO',CHECKING:'🔔 CONFERÊNCIA EM ANDAMENTO',CLOSED:'🏁 RODADA ENCERRADA',HOMOLOGATED:'🏁 RODADA ENCERRADA',NO_ROUND:'⏳ AGUARDANDO RODADA'};
+function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR')}
+setInterval(updateClock,1000);
+function apply(d){
+  document.getElementById('systemTitle').textContent=d.system_title||'Show de Prêmios';
+  document.getElementById('eventName').textContent=d.event?.name||'';
+  document.getElementById('roundName').textContent=d.round?.round_name||'Aguardando rodada';
+  const cc=document.getElementById('cardColor');
+  if(d.round?.card_color){cc.style.display='';cc.textContent='Cartela '+d.round.card_color}else cc.style.display='none';
+  document.getElementById('statusLabel').textContent=statusLabels[d.round_status]||d.round_status||'';
+  document.getElementById('totalCalled').textContent=d.total_called||0;
+  document.getElementById('lastLetter').textContent=d.last_letter||'—';
+  document.getElementById('lastNumber').textContent=d.last_called_number||'—';
+  document.getElementById('prizeTitle').textContent=d.prize?.title||'Aguardando definição';
+  document.getElementById('prizeValue').textContent=d.prize?.value_formatted||'';
+  const set=new Set(d.called_numbers||[]);
+  for(let n=1;n<=75;n++)document.getElementById('ball-'+n)?.classList.toggle('called',set.has(n));
+  const winners=Array.isArray(d.winners)?d.winners:[];
+  const wb=document.getElementById('winnerBanner');
+  if(winners.length){
+    wb.classList.add('visible');
+    document.getElementById('winnerCodes').textContent=winners.map(w=>w.ticket_code).filter(Boolean).join(' • ');
+    document.getElementById('winnerPrize').textContent=winners[0]?.prize_title||d.prize?.title||'Prêmio';
+    document.getElementById('winnerStatus').textContent=winners.every(w=>w.status==='HOMOLOGATED')?'HOMOLOGADA':(winners[0]?.status_label||'EM CONFERÊNCIA');
+  }else{
+    wb.classList.remove('visible');
+    document.getElementById('winnerCodes').textContent='';
+  }
+  const pb=document.getElementById('pixBox');
+  if(d.pix?.show&&d.pix?.key){pb.style.display='';document.getElementById('pixKey').textContent=d.pix.key;document.getElementById('pixReceiver').textContent=d.pix.receiver||''}else pb.style.display='none';
+}
+async function poll(){try{const r=await fetch('/telao/status',{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(j.status==='success')apply(j.data)}catch(e){}}
+setInterval(poll,2000);poll();
+</script>
+</body>
+</html>
