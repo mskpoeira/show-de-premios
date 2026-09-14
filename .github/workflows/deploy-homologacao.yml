@@ -98,6 +98,7 @@ jobs:
             CONTAINER=showdepremios-homologacao
             PORT=18080
             PROXY_CONTAINER=sgr-proxy-prod
+            PROD_APP=showdepremios-app
             HOMOLOG_HOST=showdepremios-hml.77-37-40-81.sslip.io
 
             mkdir -p "$APP_DIR" "$STORAGE_DIR/logs" "$STORAGE_DIR/backups" "$STORAGE_DIR/rate-limit"
@@ -109,14 +110,22 @@ jobs:
             chown -R 33:33 "$STORAGE_DIR" || true
 
             NET=''
-            if docker inspect "$PROXY_CONTAINER" >/dev/null 2>&1; then
-              NET=$(docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROXY_CONTAINER" | grep -Ev '^(bridge|host|none)$' | head -n 1 || true)
+            PROXY_NETS=$(docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROXY_CONTAINER" 2>/dev/null || true)
+            PROD_NETS=$(docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROD_APP" 2>/dev/null || true)
+            for candidate in $PROXY_NETS; do
+              if printf '%s\n' "$PROD_NETS" | grep -Fxq "$candidate"; then
+                NET="$candidate"
+                break
+              fi
+            done
+            if [ -z "$NET" ]; then
+              NET=$(printf '%s\n' "$PROXY_NETS" | grep -Ev '^(bridge|host|none)$' | head -n 1 || true)
             fi
             if [ -z "$NET" ]; then
-              echo 'ERRO: rede Docker do proxy nao encontrada.'
+              echo 'ERRO: rede Docker compartilhada com o proxy nao encontrada.'
               exit 1
             fi
-            echo "Rede do proxy: $NET"
+            echo "Rede compartilhada proxy/app: $NET"
 
             OLD_IMAGE=$(docker inspect -f '{{.Image}}' "$CONTAINER" 2>/dev/null || true)
             if [ -n "$OLD_IMAGE" ]; then docker tag "$OLD_IMAGE" "$IMAGE_ROLLBACK" || true; fi
@@ -164,6 +173,9 @@ jobs:
               fi
               exit 1
             fi
+
+            echo 'Validando resolucao e acesso ao backend pela rede do proxy...'
+            docker run --rm --network "$NET" "$IMAGE_LATEST" php -r '$u="http://showdepremios-homologacao/api/ping"; $r=@file_get_contents($u); if ($r===false) {fwrite(STDERR,"backend indisponivel\n"); exit(1);} echo $r, PHP_EOL;'
 
             echo 'Configurando acesso publico da homologacao no Caddy...'
             CADDY_DEST=/etc/caddy/Caddyfile
