@@ -11,7 +11,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
 ::error file=app/Controllers/SpeakerController.php,line=279,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/SpeakerController.php,line=291,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/UtilitiesController.php,line=32,col=0::Ternary operator condition is always true.
-::error file=app/Core/Session.php,line=73,col=0::Strict comparison using !== between non-falsy-string and '' will always evaluate to true.
 ::error file=app/Services/BackupService.php,line=104,col=0::Parameter #2 $subject of function preg_match expects string, int|string given.
 ::error file=app/Services/BackupService.php,line=106,col=0::Parameter #1 $callback of function array_map expects (callable(int|string): mixed)|null, Closure(string): non-falsy-string given.
 ::error file=app/Services/BackupService.php,line=107,col=0::Parameter #1 $callback of function array_map expects (callable(int|string): mixed)|null, Closure(string): non-falsy-string given.
@@ -93,14 +92,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          🪪  ternary.alwaysTrue                      
  ------ -------------------------------------------- 
 
- ------ ------------------------------------------------------------------ 
-  Line   app/Core/Session.php                                              
- ------ ------------------------------------------------------------------ 
-  73     Strict comparison using !== between non-falsy-string and '' will  
-         always evaluate to true.                                          
-         🪪  notIdentical.alwaysTrue                                       
- ------ ------------------------------------------------------------------ 
-
  ------ ----------------------------------------------------------------------- 
   Line   app/Services/BackupService.php                                         
  ------ ----------------------------------------------------------------------- 
@@ -162,6 +153,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          🪪  method.nonObject                                     
  ------ --------------------------------------------------------- 
 
- [ERROR] Found 26 errors                                                        
+ [ERROR] Found 25 errors                                                        
 
 PHPStan exit code: 1
