@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libonig-dev \
     zip \
     unzip \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql pdo_sqlite mbstring \
+    && docker-php-ext-install pdo_mysql pdo_pgsql \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 

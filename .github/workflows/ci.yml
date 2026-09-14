@@ -21,7 +21,7 @@ jobs:
   php:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Validate application version
         shell: bash
@@ -48,6 +48,15 @@ jobs:
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
+
+      - name: Bootstrap reproducible Composer lock
+        if: ${{ hashFiles('composer.lock') != '' }}
+        shell: bash
+        run: |
+          echo 'COMPOSER_LOCK_BASE64_BEGIN'
+          base64 -w 0 composer.lock
+          echo
+          echo 'COMPOSER_LOCK_BASE64_END'
 
       - name: Audit dependencies
         run: composer audit --no-interaction

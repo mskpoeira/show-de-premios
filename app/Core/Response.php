@@ -4,7 +4,10 @@ namespace App\Core;
 
 class Response
 {
-    public static function json(array $data, int $statusCode = 200): void
+    /**
+     * @param array<array-key, mixed> $data
+     */
+    public static function json(array $data, int $statusCode = 200): never
     {
         http_response_code($statusCode);
         header('Content-Type: application/json; charset=utf-8');
@@ -13,7 +16,7 @@ class Response
         exit;
     }
 
-    public static function redirect(string $path, ?string $success = null, ?string $error = null): void
+    public static function redirect(string $path, ?string $success = null, ?string $error = null): never
     {
         if ($success) {
             Session::setFlash('success', $success);

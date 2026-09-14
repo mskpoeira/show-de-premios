@@ -10,7 +10,7 @@ use PDO;
 
 class DashboardController
 {
-    public function index()
+    public function index(): void
     {
         $tab = trim($_GET['tab'] ?? 'visao');
         if (!in_array($tab, ['visao', 'auditoria'], true)) {
