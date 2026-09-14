@@ -19,8 +19,9 @@ jobs:
 
       - name: Validar sintaxe PHP
         run: |
-          find app database -name "*.php" -exec php -l {} +
+          find app database bin -name "*.php" -exec php -l {} +
           php -l index.php
+          php -l fire-test.php
 
       - name: Criar pacote de release isolado
         shell: bash
@@ -66,12 +67,14 @@ jobs:
             set -eu
             APP_DIR=/app/show-de-premios
             STORAGE_DIR="$APP_DIR/storage"
+            CANDIDATE_STORAGE="$APP_DIR/storage-candidate"
             IMAGE_NEW=showdepremios-app:candidate
             IMAGE_LATEST=showdepremios-app:latest
             IMAGE_ROLLBACK=showdepremios-app:rollback
             CONTAINER=showdepremios-app
             CANDIDATE=showdepremios-candidate
             PROXY_CONTAINER=sgr-proxy-prod
+            DB_BACKUP=''
 
             echo '=================================================='
             echo 'DEPLOY SHOW DE PRÊMIOS'
@@ -85,7 +88,7 @@ jobs:
             tar -xzf release-showdepremios.tar.gz
             rm -f release-showdepremios.tar.gz
 
-            mkdir -p storage/logs storage/backups
+            mkdir -p storage/logs storage/backups storage/rate-limit
             chmod -R 775 storage
             chown -R 33:33 storage || true
 
@@ -97,9 +100,7 @@ jobs:
 
             if [ -z "$NET" ]; then
               echo 'ERRO: não foi encontrada rede Docker user-defined ligada ao proxy sgr-proxy-prod.'
-              echo 'Redes do proxy:'
               docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROXY_CONTAINER" 2>/dev/null || true
-              echo 'Redes disponíveis:'
               docker network ls || true
               exit 1
             fi
@@ -114,26 +115,72 @@ jobs:
             echo 'Construindo nova imagem...'
             docker build -t "$IMAGE_NEW" .
 
-            echo 'Subindo candidato sem alterar a rota pública...'
+            echo 'Preparando banco isolado do candidato...'
+            rm -rf "$CANDIDATE_STORAGE"
+            mkdir -p "$CANDIDATE_STORAGE/logs" "$CANDIDATE_STORAGE/backups" "$CANDIDATE_STORAGE/rate-limit"
+            if [ -f "$STORAGE_DIR/database.sqlite" ]; then
+              cp -p "$STORAGE_DIR/database.sqlite" "$CANDIDATE_STORAGE/database.sqlite"
+            fi
+            chown -R 33:33 "$CANDIDATE_STORAGE" || true
+            chmod -R 775 "$CANDIDATE_STORAGE"
+
+            echo 'Subindo candidato sem alterar produção nem banco real...'
             docker rm -f "$CANDIDATE" >/dev/null 2>&1 || true
             docker run -d \
               --name "$CANDIDATE" \
               --network "$NET" \
-              -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+              -v "$CANDIDATE_STORAGE:/var/www/html/showdepremios/storage" \
               "$IMAGE_NEW"
 
-            sleep 5
-            if ! docker exec "$CANDIDATE" php -r '$r=@file_get_contents("http://127.0.0.1/"); if ($r===false) { exit(1); }'; then
-              echo 'Candidato não respondeu internamente. Mantendo produção anterior.'
+            sleep 4
+            echo 'Validando migrations no banco isolado...'
+            if ! docker exec "$CANDIDATE" php bin/migrate.php; then
+              echo 'Migration falhou no candidato. Produção permanece intacta.'
               docker logs --tail 120 "$CANDIDATE" || true
               docker rm -f "$CANDIDATE" || true
+              rm -rf "$CANDIDATE_STORAGE"
+              exit 1
+            fi
+
+            echo 'Validando health-check do candidato...'
+            if ! docker exec "$CANDIDATE" php -r '$r=@file_get_contents("http://127.0.0.1/api/ping"); if ($r===false) { exit(1); }'; then
+              echo 'Candidato não respondeu em /api/ping. Produção permanece intacta.'
+              docker logs --tail 120 "$CANDIDATE" || true
+              docker rm -f "$CANDIDATE" || true
+              rm -rf "$CANDIDATE_STORAGE"
               exit 1
             fi
             docker rm -f "$CANDIDATE" || true
+            rm -rf "$CANDIDATE_STORAGE"
+
+            echo 'Criando backup pré-migration da base real...'
+            if [ -f "$STORAGE_DIR/database.sqlite" ]; then
+              DB_BACKUP="$STORAGE_DIR/backups/predeploy-$(date +%Y%m%d-%H%M%S).sqlite"
+              cp -p "$STORAGE_DIR/database.sqlite" "$DB_BACKUP"
+              echo "Backup criado: $DB_BACKUP"
+            fi
+
+            echo 'Aplicando migration real com janela mínima de escrita...'
+            if docker inspect "$CONTAINER" >/dev/null 2>&1; then
+              docker stop "$CONTAINER" >/dev/null 2>&1 || true
+            fi
+
+            if ! docker run --rm \
+              --network "$NET" \
+              -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+              "$IMAGE_NEW" php bin/migrate.php; then
+              echo 'Migration real falhou. Restaurando banco e produção anterior.'
+              if [ -n "$DB_BACKUP" ] && [ -f "$DB_BACKUP" ]; then
+                cp -p "$DB_BACKUP" "$STORAGE_DIR/database.sqlite"
+                chown 33:33 "$STORAGE_DIR/database.sqlite" || true
+              fi
+              docker start "$CONTAINER" >/dev/null 2>&1 || true
+              docker exec "$PROXY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile || true
+              exit 1
+            fi
 
             echo 'Promovendo nova imagem...'
             docker tag "$IMAGE_NEW" "$IMAGE_LATEST"
-            docker stop "$CONTAINER" >/dev/null 2>&1 || true
             docker rm "$CONTAINER" >/dev/null 2>&1 || true
 
             docker run -d \
@@ -147,10 +194,10 @@ jobs:
             echo 'Recarregando Caddy...'
             docker exec "$PROXY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile || true
 
-            echo 'Validando URL pública...'
+            echo 'Validando health-check público...'
             ONLINE=0
             for i in $(seq 1 12); do
-              if curl --fail --silent --show-error --location --max-time 15 https://showdepremios.mskpoeira.com.br/ >/dev/null; then
+              if curl --fail --silent --show-error --location --max-time 15 https://showdepremios.mskpoeira.com.br/api/ping >/dev/null; then
                 ONLINE=1
                 break
               fi
@@ -159,12 +206,12 @@ jobs:
             done
 
             if [ "$ONLINE" -eq 1 ]; then
-              echo 'SHOW DE PRÊMIOS ONLINE.'
+              echo 'SHOW DE PRÊMIOS ONLINE E MIGRADO.'
               docker image rm "$IMAGE_ROLLBACK" >/dev/null 2>&1 || true
               exit 0
             fi
 
-            echo 'Nova versão não respondeu externamente. Iniciando rollback...'
+            echo 'Nova versão não respondeu externamente. Iniciando rollback da aplicação...'
             docker logs --tail 150 "$CONTAINER" || true
             docker rm -f "$CONTAINER" || true
 
@@ -177,7 +224,7 @@ jobs:
                 -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
                 "$IMAGE_ROLLBACK"
               docker exec "$PROXY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile || true
-              echo 'Rollback executado.'
+              echo 'Rollback da aplicação executado. O backup pré-deploy permanece preservado.'
             else
               echo 'Não existe imagem anterior disponível para rollback.'
             fi
