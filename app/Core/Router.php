@@ -29,36 +29,27 @@ class Router
 
     public static function dispatch(): void
     {
-        $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $requestMethod = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         if ($requestMethod === 'HEAD') {
             $requestMethod = 'GET';
         }
-        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
-        // Normalize base url
-        $base = rtrim(getenv('APP_BASE_URL') ?: '/showdepremios', '/');
-        if (!empty($base) && str_starts_with($uri, $base)) {
-            $uri = substr($uri, strlen($base));
+        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+        $base = trim((string)(getenv('APP_BASE_URL') ?: ''), '/');
+        if ($base !== '') {
+            $basePath = '/' . $base;
+            if ($uri === $basePath) {
+                $uri = '/';
+            } elseif (str_starts_with($uri, $basePath . '/')) {
+                $uri = substr($uri, strlen($basePath));
+            }
         }
-
         $uri = '/' . trim($uri, '/');
 
-        // Check CSRF for POST
         if ($requestMethod === 'POST') {
-            $uriWithoutPrefix = '/' . trim($uri, '/');
-            $csrfExempt = str_starts_with($uriWithoutPrefix, '/locutor/')
-                || str_starts_with($uriWithoutPrefix, '/sorteio/')
-                || str_starts_with($uriWithoutPrefix, '/comprar')
-                || str_starts_with($uriWithoutPrefix, '/pedido/')
-                || str_starts_with($uriWithoutPrefix, '/cartelas/')
-                || str_starts_with($uriWithoutPrefix, '/validar');
-
-            if (!$csrfExempt) {
-                $token = $_POST['_csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
-                if (!Csrf::validate($token)) {
-                    http_response_code(403);
-                    die("Aviso de Segurança: Token CSRF inválido ou expirado. Atualize a página e tente novamente.");
-                }
+            $token = $_POST['_csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+            if (!Csrf::validate(is_string($token) ? $token : null)) {
+                self::csrfFailure();
             }
         }
 
@@ -70,43 +61,53 @@ class Router
             $pattern = preg_replace('/{([a-zA-Z0-9_]+)}/', '(?P<$1>[^/]+)', $route['path']);
             $pattern = '#^' . $pattern . '$#';
 
-            if (preg_match($pattern, $uri, $matches)) {
-                $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
-
-                // Run Middlewares
-                foreach ($route['middlewares'] as $mw) {
-                    if (is_callable($mw)) {
-                        $mw();
-                    } elseif (class_exists($mw) && method_exists($mw, 'handle')) {
-                        (new $mw())->handle();
-                    }
-                }
-
-                // Execute handler passing parameter values
-                $handler = $route['handler'];
-                $argValues = array_values($params);
-
-                if (is_array($handler)) {
-                    [$class, $action] = $handler;
-                    $controller = new $class();
-                    if (!empty($argValues)) {
-                        $controller->$action(...$argValues);
-                    } else {
-                        $controller->$action();
-                    }
-                } elseif (is_callable($handler)) {
-                    if (!empty($argValues)) {
-                        $handler(...$argValues);
-                    } else {
-                        $handler();
-                    }
-                }
-                return;
+            if (!preg_match($pattern, $uri, $matches)) {
+                continue;
             }
+
+            $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
+
+            foreach ($route['middlewares'] as $mw) {
+                if (is_callable($mw)) {
+                    $mw();
+                } elseif (class_exists($mw) && method_exists($mw, 'handle')) {
+                    (new $mw())->handle();
+                }
+            }
+
+            $handler = $route['handler'];
+            $argValues = array_values($params);
+
+            if (is_array($handler)) {
+                [$class, $action] = $handler;
+                $controller = new $class();
+                $controller->$action(...$argValues);
+            } elseif (is_callable($handler)) {
+                $handler(...$argValues);
+            }
+            return;
         }
 
-        // 404
         http_response_code(404);
         View::render('errors/404', ['title' => 'Página não encontrada']);
+    }
+
+    private static function csrfFailure(): never
+    {
+        http_response_code(403);
+        $accept = strtolower((string)($_SERVER['HTTP_ACCEPT'] ?? ''));
+        $isAjax = str_contains($accept, 'application/json') || isset($_POST['_ajax']);
+        if ($isAjax) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'error' => 'Token CSRF inválido ou expirado. Atualize a página e tente novamente.'
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Aviso de Segurança: Token CSRF inválido ou expirado. Atualize a página e tente novamente.';
+        exit;
     }
 }
