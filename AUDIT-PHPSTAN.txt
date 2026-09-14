@@ -1,69 +1,30 @@
-::error file=app/Controllers/AuditController.php,line=29,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Controllers/BackupController.php,line=58,col=0::Parameter #1 $jsonString of static method App\Services\BackupService::restoreFromJson() expects string, string|false given.
-::error file=app/Controllers/CashController.php,line=28,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Controllers/CashController.php,line=31,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Controllers/CashController.php,line=66,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/CashController.php,line=82,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/CashController.php,line=91,col=0::Cannot call method fetchAll() on PDOStatement|false.
+::error file=app/Controllers/CashController.php,line=88,col=0::Ternary operator condition is always true.
 ::error file=app/Controllers/DashboardController.php,line=13,col=0::Method App\Controllers\DashboardController::index() has no return type specified.
-::error file=app/Controllers/DashboardController.php,line=24,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/DashboardController.php,line=27,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/DashboardController.php,line=51,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/DashboardController.php,line=61,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/DashboardController.php,line=64,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Controllers/DashboardController.php,line=72,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Controllers/DashboardController.php,line=102,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Controllers/DayController.php,line=29,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/DayController.php,line=34,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/DayController.php,line=60,col=0::Cannot call method fetchAll() on PDOStatement|false.
 ::error file=app/Controllers/DisplayController.php,line=28,col=0::Method App\Controllers\DisplayController::publicData() return type has no value type specified in iterable type array.
-::error file=app/Controllers/DisplayController.php,line=33,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/DisplayController.php,line=35,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/DrawController.php,line=18,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/DrawController.php,line=80,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=app/Controllers/DrawController.php,line=165,col=0::Method App\Controllers\DrawController::json() has parameter $data with no value type specified in iterable type array.
 ::error file=app/Controllers/OnlineSalesController.php,line=299,col=0::Method App\Controllers\OnlineSalesController::activeDigitalEvent() return type has no value type specified in iterable type array.
 ::error file=app/Controllers/OnlineSalesController.php,line=303,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/OnlineSalesController.php,line=306,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/OnlineSalesController.php,line=313,col=0::Method App\Controllers\OnlineSalesController::checkoutError() should always throw an exception or terminate script execution but doesn't do that.
-::error file=app/Controllers/ReportController.php,line=18,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/ReportController.php,line=123,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/ReportController.php,line=148,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/RoundController.php,line=75,col=0::Cannot call method fetchAll() on PDOStatement|false.
+::error file=app/Controllers/RoundController.php,line=354,col=0::Call to function in_array() with arguments 'CHECKING'|'IN_PROGRESS'|'OPEN'|'PAUSED', array{'OPEN', 'IN_PROGRESS', 'PAUSED', 'CHECKING'} and true will always evaluate to true.
 ::error file=app/Controllers/RoundController.php,line=494,col=0::Match arm comparison between 'CHECKING' and 'CHECKING' is always true.
-::error file=app/Controllers/SellerController.php,line=26,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/SettingsController.php,line=23,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/SettingsController.php,line=24,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/SettingsController.php,line=25,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/SettingsController.php,line=32,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/SettingsController.php,line=39,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/SettingsController.php,line=57,col=0::Cannot call method fetchColumn() on PDOStatement|false.
+::error file=app/Controllers/RoundController.php,line=635,col=0::Offset 'CHECKING'|'CLOSED'|'IN_PROGRESS'|'OPEN'|'PAUSED' on array{OPEN: 'Aberta (Vendas)', IN_PROGRESS: 'Em andamento …', PAUSED: 'Pausada', CHECKING: 'Em conferência', CLOSED: 'Fechada'} on left side of ?? always exists and is not nullable.
 ::error file=app/Controllers/SettingsController.php,line=59,col=0::Offset 'cash_closings' on array{sales: int, rounds: int, cash_movements: int, cash_closings: int, operation_days: int, sellers: int, audit_logs: int, orders: int, ...} on left side of ?? always exists and is not nullable.
 ::error file=app/Controllers/SettingsController.php,line=59,col=0::Offset 'cash_movements' on array{sales: int, rounds: int, cash_movements: int, cash_closings: int, operation_days: int, sellers: int, audit_logs: int, orders: int, ...} on left side of ?? always exists and is not nullable.
 ::error file=app/Controllers/SettingsController.php,line=60,col=0::Offset 'orders' on array{sales: int, rounds: int, cash_movements: int, cash_closings: int, operation_days: int, sellers: int, audit_logs: int, orders: int, ...} on left side of ?? always exists and is not nullable.
-::error file=app/Controllers/SettingsController.php,line=61,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=app/Controllers/SettingsController.php,line=80,col=0::Parameter #2 $timestamp of function date expects int|null, int|false given.
-::error file=app/Controllers/SettingsController.php,line=127,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Controllers/SettingsController.php,line=129,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=app/Controllers/SettingsController.php,line=170,col=0::Method App\Controllers\SettingsController::saveSettings() has parameter $updates with no value type specified in iterable type array.
-::error file=app/Controllers/SpeakerController.php,line=87,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/SpeakerController.php,line=210,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=app/Controllers/SpeakerController.php,line=263,col=0::Method App\Controllers\SpeakerController::resolveDrawForRound() return type has no value type specified in iterable type array.
 ::error file=app/Controllers/SpeakerController.php,line=276,col=0::Method App\Controllers\SpeakerController::activeEvent() return type has no value type specified in iterable type array.
 ::error file=app/Controllers/SpeakerController.php,line=279,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/SpeakerController.php,line=282,col=0::Method App\Controllers\SpeakerController::findRound() return type has no value type specified in iterable type array.
 ::error file=app/Controllers/SpeakerController.php,line=291,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/SpeakerController.php,line=294,col=0::Method App\Controllers\SpeakerController::jsonResponse() has parameter $data with no value type specified in iterable type array.
-::error file=app/Controllers/TicketController.php,line=61,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/UserController.php,line=25,col=0::Cannot call method fetchAll() on PDOStatement|false.
-::error file=app/Controllers/UtilitiesController.php,line=18,col=0::Cannot call method fetch() on PDOStatement|false.
+::error file=app/Controllers/UtilitiesController.php,line=32,col=0::Ternary operator condition is always true.
 ::error file=app/Controllers/ValidationController.php,line=185,col=0::Method App\Controllers\ValidationController::logValidation() has parameter $ticket with no value type specified in iterable type array.
 ::error file=app/Controllers/ValidationController.php,line=185,col=0::Method App\Controllers\ValidationController::logValidation() has parameter $user with no value type specified in iterable type array.
 ::error file=app/Core/Auth.php,line=72,col=0::Method App\Core\Auth::user() return type has no value type specified in iterable type array.
-::error file=app/Core/Auth.php,line=198,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=app/Core/Auth.php,line=201,col=0::Method App\Core\Auth::writeSession() has parameter $user with no value type specified in iterable type array.
 ::error file=app/Core/RateLimiter.php,line=44,col=0::Parameter #2 $data of function fwrite expects string, string|false given.
-::error file=app/Core/Response.php,line=7,col=0::Method App\Core\Response::json() has parameter $data with no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=7,col=0::Property App\Core\Router::$routes type has no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=9,col=0::Method App\Core\Router::get() has parameter $handler with no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=9,col=0::Method App\Core\Router::get() has parameter $middlewares with no value type specified in iterable type array.
@@ -77,23 +38,18 @@
 ::error file=app/Core/Session.php,line=69,col=0::Offset 'secure' on array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side of ?? always exists and is not nullable.
 ::error file=app/Core/Session.php,line=70,col=0::Offset 'httponly' on array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side of ?? always exists and is not nullable.
 ::error file=app/Core/Session.php,line=71,col=0::Offset 'samesite' on array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side of ?? always exists and is not nullable.
+::error file=app/Core/StrictPDO.php,line=32,col=0::Method App\Core\StrictPDO::prepare() has parameter $options with no value type specified in iterable type array.
 ::error file=app/Core/View.php,line=7,col=0::Method App\Core\View::render() has parameter $data with no value type specified in iterable type array.
-::error file=app/Middleware/SpeakerMiddleware.php,line=36,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=app/Services/AuditService.php,line=10,col=0::Method App\Services\AuditService::log() has parameter $newValues with no value type specified in iterable type array.
 ::error file=app/Services/AuditService.php,line=10,col=0::Method App\Services\AuditService::log() has parameter $oldValues with no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=15,col=0::Property App\Services\BackupService::$tables type has no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=42,col=0::Method App\Services\BackupService::createBackupData() return type has no value type specified in iterable type array.
-::error file=app/Services/BackupService.php,line=49,col=0::Cannot call method fetchAll() on PDOStatement|false.
 ::error file=app/Services/BackupService.php,line=104,col=0::Parameter #2 $subject of function preg_match expects string, int|string given.
 ::error file=app/Services/BackupService.php,line=106,col=0::Parameter #1 $callback of function array_map expects (callable(int|string): mixed)|null, Closure(string): non-falsy-string given.
 ::error file=app/Services/BackupService.php,line=107,col=0::Parameter #1 $callback of function array_map expects (callable(int|string): mixed)|null, Closure(string): non-falsy-string given.
 ::error file=app/Services/BackupService.php,line=128,col=0::Method App\Services\BackupService::cleanDatabaseKeepUsersAndSellers() return type has no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=138,col=0::Method App\Services\BackupService::cleanDatabaseSelective() has parameter $selected with no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=138,col=0::Method App\Services\BackupService::cleanDatabaseSelective() return type has no value type specified in iterable type array.
-::error file=app/Services/BackupService.php,line=160,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Services/BackupService.php,line=167,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Services/BackupService.php,line=169,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Services/BackupService.php,line=176,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=app/Services/BackupService.php,line=201,col=0::Method App\Services\BackupService::cleanTables() has parameter $tables with no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=201,col=0::Method App\Services\BackupService::cleanTables() return type has no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=209,col=0::Cannot call method fetchColumn() on PDOStatement|false.
@@ -118,12 +74,12 @@
 ::error file=app/Services/GameEngineService.php,line=402,col=0::Method App\Services\GameEngineService::getDraw() return type has no value type specified in iterable type array.
 ::error file=app/Services/PixService.php,line=137,col=0::Method App\Services\PixService::validateSemantic() return type has no value type specified in iterable type array.
 ::error file=app/Services/PixService.php,line=283,col=0::Method App\Services\PixService::getConfig() return type has no value type specified in iterable type array.
+::error file=app/Services/PixService.php,line=287,col=0::Ternary operator condition is always true.
 ::error file=app/Services/PricingService.php,line=10,col=0::Method App\Services\PricingService::getRuleForDate() return type has no value type specified in iterable type array.
 ::error file=app/Services/PricingService.php,line=40,col=0::Method App\Services\PricingService::getActiveRule() return type has no value type specified in iterable type array.
 ::error file=app/Services/PricingService.php,line=45,col=0::Method App\Services\PricingService::calculate() has parameter $rule with no value type specified in iterable type array.
 ::error file=app/Services/PricingService.php,line=45,col=0::Method App\Services\PricingService::calculate() return type has no value type specified in iterable type array.
 ::error file=app/Services/PrizeSuggestionService.php,line=17,col=0::Method App\Services\PrizeSuggestionService::getSettings() return type has no value type specified in iterable type array.
-::error file=app/Services/PrizeSuggestionService.php,line=23,col=0::Cannot call method fetchAll() on PDOStatement|false.
 ::error file=app/Services/PrizeSuggestionService.php,line=46,col=0::Method App\Services\PrizeSuggestionService::calculateNextRoundSuggestion() return type has no value type specified in iterable type array.
 ::error file=app/Services/ReportService.php,line=10,col=0::Method App\Services\ReportService::getDayReport() return type has no value type specified in iterable type array.
 ::error file=app/Services/ReportService.php,line=97,col=0::Method App\Services\ReportService::getPeriodReport() return type has no value type specified in iterable type array.
@@ -341,36 +297,12 @@
 ::error file=database/Migrations.php,line=337,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=database/Migrations.php,line=349,col=0::Cannot call method fetchAll() on PDOStatement|false.
 ::error file=database/Migrations.php,line=364,col=0::Cannot call method fetchAll() on PDOStatement|false.
- ------ --------------------------------------------------------- 
-  Line   app/Controllers/AuditController.php                      
- ------ --------------------------------------------------------- 
-  29     Cannot call method fetchColumn() on PDOStatement|false.  
-         🪪  method.nonObject                                     
- ------ --------------------------------------------------------- 
-
- ------ --------------------------------------------------------------- 
-  Line   app/Controllers/BackupController.php                           
- ------ --------------------------------------------------------------- 
-  58     Parameter #1 $jsonString of static method                      
-         App\Services\BackupService::restoreFromJson() expects string,  
-         string|false given.                                            
-         🪪  argument.type                                              
- ------ --------------------------------------------------------------- 
-
- ------ --------------------------------------------------------- 
-  Line   app/Controllers/CashController.php                       
- ------ --------------------------------------------------------- 
-  28     Cannot call method fetchColumn() on PDOStatement|false.  
-         🪪  method.nonObject                                     
-  31     Cannot call method fetchColumn() on PDOStatement|false.  
-         🪪  method.nonObject                                     
-  66     Cannot call method fetchAll() on PDOStatement|false.     
-         🪪  method.nonObject                                     
-  82     Cannot call method fetchAll() on PDOStatement|false.     
-         🪪  method.nonObject                                     
-  91     Cannot call method fetchAll() on PDOStatement|false.     
-         🪪  method.nonObject                                     
- ------ --------------------------------------------------------- 
+ ------ -------------------------------------------- 
+  Line   app/Controllers/CashController.php          
+ ------ -------------------------------------------- 
+  88     Ternary operator condition is always true.  
+         🪪  ternary.alwaysTrue                      
+ ------ -------------------------------------------- 
 
  ------ ------------------------------------------------------------------- 
   Line   app/Controllers/DashboardController.php                            
@@ -378,32 +310,7 @@
   13     Method App\Controllers\DashboardController::index() has no return  
          type specified.                                                    
          🪪  missingType.return                                             
-  24     Cannot call method fetchAll() on PDOStatement|false.               
-         🪪  method.nonObject                                               
-  27     Cannot call method fetch() on PDOStatement|false.                  
-         🪪  method.nonObject                                               
-  51     Cannot call method fetchAll() on PDOStatement|false.               
-         🪪  method.nonObject                                               
-  61     Cannot call method fetch() on PDOStatement|false.                  
-         🪪  method.nonObject                                               
-  64     Cannot call method fetchColumn() on PDOStatement|false.            
-         🪪  method.nonObject                                               
-  72     Cannot call method fetchColumn() on PDOStatement|false.            
-         🪪  method.nonObject                                               
-  102    Cannot call method fetchColumn() on PDOStatement|false.            
-         🪪  method.nonObject                                               
  ------ ------------------------------------------------------------------- 
-
- ------ ------------------------------------------------------ 
-  Line   app/Controllers/DayController.php                     
- ------ ------------------------------------------------------ 
-  29     Cannot call method fetch() on PDOStatement|false.     
-         🪪  method.nonObject                                  
-  34     Cannot call method fetch() on PDOStatement|false.     
-         🪪  method.nonObject                                  
-  60     Cannot call method fetchAll() on PDOStatement|false.  
-         🪪  method.nonObject                                  
- ------ ------------------------------------------------------ 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Controllers/DisplayController.php                                  
@@ -414,19 +321,11 @@
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
-  33     Cannot call method fetch() on PDOStatement|false.                      
-         🪪  method.nonObject                                                   
-  35     Cannot call method fetch() on PDOStatement|false.                      
-         🪪  method.nonObject                                                   
  ------ ----------------------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Controllers/DrawController.php                                     
  ------ ----------------------------------------------------------------------- 
-  18     Cannot call method fetch() on PDOStatement|false.                      
-         🪪  method.nonObject                                                   
-  80     Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
   165    Method App\Controllers\DrawController::json() has parameter $data      
          with no value type specified in iterable type array.                   
          🪪  missingType.iterableValue                                          
@@ -448,57 +347,31 @@
          🪪  method.nonObject                                                   
   306    Cannot call method fetch() on PDOStatement|false.                      
          🪪  method.nonObject                                                   
-  313    Method App\Controllers\OnlineSalesController::checkoutError() should   
-         always throw an exception or terminate script execution but doesn't    
-         do that.                                                               
-         🪪  return.never (non-ignorable)                                       
  ------ ----------------------------------------------------------------------- 
 
- ------ ------------------------------------------------------ 
-  Line   app/Controllers/ReportController.php                  
- ------ ------------------------------------------------------ 
-  18     Cannot call method fetchAll() on PDOStatement|false.  
-         🪪  method.nonObject                                  
-  123    Cannot call method fetchAll() on PDOStatement|false.  
-         🪪  method.nonObject                                  
-  148    Cannot call method fetchAll() on PDOStatement|false.  
-         🪪  method.nonObject                                  
- ------ ------------------------------------------------------ 
-
- ------ ------------------------------------------------------------------ 
-  Line   app/Controllers/RoundController.php                               
- ------ ------------------------------------------------------------------ 
-  75     Cannot call method fetchAll() on PDOStatement|false.              
-         🪪  method.nonObject                                              
-  494    Match arm comparison between 'CHECKING' and 'CHECKING' is always  
-         true.                                                             
-         🪪  match.alwaysTrue                                              
-         💡  Remove remaining cases below this one and this error will     
-         disappear too.                                                    
- ------ ------------------------------------------------------------------ 
-
- ------ ------------------------------------------------------ 
-  Line   app/Controllers/SellerController.php                  
- ------ ------------------------------------------------------ 
-  26     Cannot call method fetchAll() on PDOStatement|false.  
-         🪪  method.nonObject                                  
- ------ ------------------------------------------------------ 
+ ------ ----------------------------------------------------------------------- 
+  Line   app/Controllers/RoundController.php                                    
+ ------ ----------------------------------------------------------------------- 
+  354    Call to function in_array() with arguments                             
+         'CHECKING'|'IN_PROGRESS'|'OPEN'|'PAUSED', array{'OPEN',                
+         'IN_PROGRESS', 'PAUSED', 'CHECKING'} and true will always evaluate to  
+         true.                                                                  
+         🪪  function.alreadyNarrowedType                                       
+  494    Match arm comparison between 'CHECKING' and 'CHECKING' is always       
+         true.                                                                  
+         🪪  match.alwaysTrue                                                   
+         💡  Remove remaining cases below this one and this error will          
+         disappear too.                                                         
+  635    Offset 'CHECKING'|'CLOSED'|'IN_PROGRESS'|'OPEN'|'PAUSED' on            
+         array{OPEN: 'Aberta (Vendas)', IN_PROGRESS: 'Em andamento …', PAUSED:  
+         'Pausada', CHECKING: 'Em conferência', CLOSED: 'Fechada'} on left      
+         side of ?? always exists and is not nullable.                          
+         🪪  nullCoalesce.offset                                                
+ ------ ----------------------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Controllers/SettingsController.php                                 
  ------ ----------------------------------------------------------------------- 
-  23     Cannot call method fetchAll() on PDOStatement|false.                   
-         🪪  method.nonObject                                                   
-  24     Cannot call method fetchAll() on PDOStatement|false.                   
-         🪪  method.nonObject                                                   
-  25     Cannot call method fetch() on PDOStatement|false.                      
-         🪪  method.nonObject                                                   
-  32     Cannot call method fetchAll() on PDOStatement|false.                   
-         🪪  method.nonObject                                                   
-  39     Cannot call method fetchAll() on PDOStatement|false.                   
-         🪪  method.nonObject                                                   
-  57     Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
   59     Offset 'cash_closings' on array{sales: int, rounds: int,               
          cash_movements: int, cash_closings: int, operation_days: int,          
          sellers: int, audit_logs: int, orders: int, ...} on left side of ??    
@@ -514,15 +387,9 @@
          audit_logs: int, orders: int, ...} on left side of ?? always exists    
          and is not nullable.                                                   
          🪪  nullCoalesce.offset                                                
-  61     Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
   80     Parameter #2 $timestamp of function date expects int|null, int|false   
          given.                                                                 
          🪪  argument.type                                                      
-  127    Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
-  129    Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
   170    Method App\Controllers\SettingsController::saveSettings() has          
          parameter $updates with no value type specified in iterable type       
          array.                                                                 
@@ -535,10 +402,6 @@
  ------ ----------------------------------------------------------------------- 
   Line   app/Controllers/SpeakerController.php                                  
  ------ ----------------------------------------------------------------------- 
-  87     Cannot call method fetchAll() on PDOStatement|false.                   
-         🪪  method.nonObject                                                   
-  210    Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
   263    Method App\Controllers\SpeakerController::resolveDrawForRound()        
          return type has no value type specified in iterable type array.        
          🪪  missingType.iterableValue                                          
@@ -569,26 +432,12 @@
          terable-type                                                           
  ------ ----------------------------------------------------------------------- 
 
- ------ ------------------------------------------------------ 
-  Line   app/Controllers/TicketController.php                  
- ------ ------------------------------------------------------ 
-  61     Cannot call method fetchAll() on PDOStatement|false.  
-         🪪  method.nonObject                                  
- ------ ------------------------------------------------------ 
-
- ------ ------------------------------------------------------ 
-  Line   app/Controllers/UserController.php                    
- ------ ------------------------------------------------------ 
-  25     Cannot call method fetchAll() on PDOStatement|false.  
-         🪪  method.nonObject                                  
- ------ ------------------------------------------------------ 
-
- ------ --------------------------------------------------- 
-  Line   app/Controllers/UtilitiesController.php            
- ------ --------------------------------------------------- 
-  18     Cannot call method fetch() on PDOStatement|false.  
-         🪪  method.nonObject                               
- ------ --------------------------------------------------- 
+ ------ -------------------------------------------- 
+  Line   app/Controllers/UtilitiesController.php     
+ ------ -------------------------------------------- 
+  32     Ternary operator condition is always true.  
+         🪪  ternary.alwaysTrue                      
+ ------ -------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Controllers/ValidationController.php                               
@@ -617,8 +466,6 @@
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
-  198    Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
   201    Method App\Core\Auth::writeSession() has parameter $user with no       
          value type specified in iterable type array.                           
          🪪  missingType.iterableValue                                          
@@ -634,17 +481,6 @@
          given.                                                              
          🪪  argument.type                                                   
  ------ -------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Core/Response.php                                                  
- ------ ----------------------------------------------------------------------- 
-  7      Method App\Core\Response::json() has parameter $data with no value     
-         type specified in iterable type array.                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Core/Router.php                                                    
@@ -724,6 +560,17 @@
  ------ ----------------------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
+  Line   app/Core/StrictPDO.php                                                 
+ ------ ----------------------------------------------------------------------- 
+  32     Method App\Core\StrictPDO::prepare() has parameter $options with no    
+         value type specified in iterable type array.                           
+         🪪  missingType.iterableValue                                          
+         💡  See:                                                               
+         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
+         terable-type                                                           
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
   Line   app/Core/View.php                                                      
  ------ ----------------------------------------------------------------------- 
   7      Method App\Core\View::render() has parameter $data with no value type  
@@ -733,13 +580,6 @@
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
  ------ ----------------------------------------------------------------------- 
-
- ------ --------------------------------------------------------- 
-  Line   app/Middleware/SpeakerMiddleware.php                     
- ------ --------------------------------------------------------- 
-  36     Cannot call method fetchColumn() on PDOStatement|false.  
-         🪪  method.nonObject                                     
- ------ --------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Services/AuditService.php                                          
@@ -773,8 +613,6 @@
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
-  49     Cannot call method fetchAll() on PDOStatement|false.                   
-         🪪  method.nonObject                                                   
   104    Parameter #2 $subject of function preg_match expects string,           
          int|string given.                                                      
          🪪  argument.type                                                      
@@ -811,14 +649,6 @@
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
-  160    Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
-  167    Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
-  169    Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
-  176    Cannot call method fetchColumn() on PDOStatement|false.                
-         🪪  method.nonObject                                                   
   201    Method App\Services\BackupService::cleanTables() has parameter         
          $tables with no value type specified in iterable type array.           
          🪪  missingType.iterableValue                                          
@@ -973,6 +803,8 @@
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
+  287    Ternary operator condition is always true.                             
+         🪪  ternary.alwaysTrue                                                 
  ------ ----------------------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
@@ -1013,8 +845,6 @@
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
-  23     Cannot call method fetchAll() on PDOStatement|false.                   
-         🪪  method.nonObject                                                   
   46     Method                                                                 
          App\Services\PrizeSuggestionService::calculateNextRoundSuggestion()    
          return type has no value type specified in iterable type array.        
@@ -1647,6 +1477,6 @@
          🪪  method.nonObject                                     
  ------ --------------------------------------------------------- 
 
- [ERROR] Found 343 errors                                                       
+ [ERROR] Found 299 errors                                                       
 
 PHPStan exit code: 1
