@@ -177,7 +177,7 @@ jobs:
             echo 'Validando resolucao e acesso ao backend pela rede do proxy...'
             docker run --rm --network "$NET" "$IMAGE_LATEST" php -r '$u="http://showdepremios-homologacao/api/ping"; $r=@file_get_contents($u); if ($r===false) {fwrite(STDERR,"backend indisponivel\n"); exit(1);} echo $r, PHP_EOL;'
 
-            echo 'Configurando acesso publico da homologacao no Caddy...'
+            echo 'Configurando acesso publico temporario da homologacao no Caddy...'
             CADDY_DEST=/etc/caddy/Caddyfile
             CADDY_SOURCE=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/etc/caddy/Caddyfile"}}{{.Source}}{{end}}{{end}}' "$PROXY_CONTAINER" 2>/dev/null || true)
             if [ -n "$CADDY_SOURCE" ] && [ -f "$CADDY_SOURCE" ]; then
@@ -189,7 +189,7 @@ jobs:
 
             TMP_FILE="${CADDY_FILE}.tmp"
             sed '/# BEGIN SHOWDEPREMIOS HOMOLOGACAO/,/# END SHOWDEPREMIOS HOMOLOGACAO/d' "$CADDY_FILE" > "$TMP_FILE"
-            printf '\n# BEGIN SHOWDEPREMIOS HOMOLOGACAO\n%s {\n    reverse_proxy showdepremios-homologacao:80\n}\n# END SHOWDEPREMIOS HOMOLOGACAO\n' "$HOMOLOG_HOST" >> "$TMP_FILE"
+            printf '\n# BEGIN SHOWDEPREMIOS HOMOLOGACAO\nhttp://%s {\n    reverse_proxy showdepremios-homologacao:80\n}\n# END SHOWDEPREMIOS HOMOLOGACAO\n' "$HOMOLOG_HOST" >> "$TMP_FILE"
             mv "$TMP_FILE" "$CADDY_FILE"
 
             if [ -z "$CADDY_SOURCE" ]; then
@@ -199,20 +199,20 @@ jobs:
             docker exec "$PROXY_CONTAINER" caddy validate --config "$CADDY_DEST"
             docker exec "$PROXY_CONTAINER" caddy reload --config "$CADDY_DEST"
 
-            echo "HOMOLOGACAO PUBLICADA EM https://$HOMOLOG_HOST"
+            echo "HOMOLOGACAO PUBLICADA TEMPORARIAMENTE EM http://$HOMOLOG_HOST"
             docker image rm "$IMAGE_ROLLBACK" >/dev/null 2>&1 || true
 
       - name: Validar homologacao pela Internet
         shell: bash
         run: |
           set -euo pipefail
-          for i in $(seq 1 24); do
-            if curl --fail --silent --show-error --location --max-time 15 "https://${HOMOLOG_HOST}/api/ping"; then
+          for i in $(seq 1 18); do
+            if curl --fail --silent --show-error --location --max-time 10 "http://${HOMOLOG_HOST}/api/ping"; then
               echo
-              echo "Homologacao acessivel publicamente: https://${HOMOLOG_HOST}"
+              echo "Homologacao acessivel publicamente: http://${HOMOLOG_HOST}"
               exit 0
             fi
-            echo "Aguardando HTTPS/Caddy ($i/24)..."
+            echo "Aguardando HTTP/Caddy ($i/18)..."
             sleep 5
           done
           echo 'ERRO: homologacao nao ficou acessivel publicamente.'
