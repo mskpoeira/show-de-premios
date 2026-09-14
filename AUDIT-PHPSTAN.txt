@@ -1,5 +1,4 @@
 Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios/phpstan.neon.
-::error file=app/Controllers/DashboardController.php,line=13,col=0::Method App\Controllers\DashboardController::index() has no return type specified.
 ::error file=app/Controllers/OnlineSalesController.php,line=303,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/OnlineSalesController.php,line=306,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/RoundController.php,line=354,col=0::Call to function in_array() with arguments 'CHECKING'|'IN_PROGRESS'|'OPEN'|'PAUSED', array{'OPEN', 'IN_PROGRESS', 'PAUSED', 'CHECKING'} and true will always evaluate to true.
@@ -26,14 +25,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
 ::error file=database/Migrations.php,line=337,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=database/Migrations.php,line=349,col=0::Cannot call method fetchAll() on PDOStatement|false.
 ::error file=database/Migrations.php,line=364,col=0::Cannot call method fetchAll() on PDOStatement|false.
- ------ ------------------------------------------------------------------- 
-  Line   app/Controllers/DashboardController.php                            
- ------ ------------------------------------------------------------------- 
-  13     Method App\Controllers\DashboardController::index() has no return  
-         type specified.                                                    
-         🪪  missingType.return                                             
- ------ ------------------------------------------------------------------- 
-
  ------ --------------------------------------------------- 
   Line   app/Controllers/OnlineSalesController.php          
  ------ --------------------------------------------------- 
@@ -171,6 +162,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          🪪  method.nonObject                                     
  ------ --------------------------------------------------------- 
 
- [ERROR] Found 27 errors                                                        
+ [ERROR] Found 26 errors                                                        
 
 PHPStan exit code: 1
