@@ -12,7 +12,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -49,14 +49,20 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Bootstrap reproducible Composer lock
-        if: ${{ hashFiles('composer.lock') != '' }}
+      - name: Commit generated Composer lock on hardening branch
+        if: ${{ github.ref == 'refs/heads/fix/release-hardening-20260914' && hashFiles('composer.lock') != '' }}
         shell: bash
         run: |
-          echo 'COMPOSER_LOCK_BASE64_BEGIN'
-          base64 -w 0 composer.lock
-          echo
-          echo 'COMPOSER_LOCK_BASE64_END'
+          set -euo pipefail
+          git add composer.lock
+          if git diff --cached --quiet; then
+            echo 'composer.lock already versioned and unchanged.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build: lock Composer dependencies'
+          git push origin HEAD:${GITHUB_REF_NAME}
 
       - name: Audit dependencies
         run: composer audit --no-interaction
