@@ -36,9 +36,13 @@ jobs:
           echo '=== HML NETWORKS ==='; docker inspect showdepremios-homologacao --format '{{json .NetworkSettings.Networks}}' 2>&1 || true
           echo '=== PROXY PORT BINDINGS ==='; docker inspect sgr-proxy-prod --format '{{json .HostConfig.PortBindings}}' 2>&1 || true
           echo '=== PROXY NETWORKS ==='; docker inspect sgr-proxy-prod --format '{{json .NetworkSettings.Networks}}' 2>&1 || true
+          echo '=== PROXY MOUNTS ==='; docker inspect sgr-proxy-prod --format '{{json .Mounts}}' 2>&1 || true
+          CADDY_SOURCE=$(docker inspect sgr-proxy-prod --format '{{range .Mounts}}{{if eq .Destination "/etc/caddy/Caddyfile"}}{{.Source}}{{end}}{{end}}' 2>/dev/null || true)
+          echo "=== CADDY SOURCE: $CADDY_SOURCE ==="
+          if [ -n "$CADDY_SOURCE" ]; then ls -ld "$CADDY_SOURCE" 2>&1 || true; file "$CADDY_SOURCE" 2>&1 || true; grep -n -A8 -B3 'SHOWDEPREMIOS HOMOLOGACAO\|showdepremios-hml' "$CADDY_SOURCE" 2>&1 || true; fi
           echo '=== LOCAL HML 18080 ==='; curl -sv --max-time 10 http://127.0.0.1:18080/api/ping 2>&1 || true
           echo '=== HML VIA DOCKER NETWORK FROM PROXY ==='; docker exec sgr-proxy-prod sh -lc 'wget -S -O- -T 10 http://showdepremios-homologacao/api/ping 2>&1 || true' 2>&1 || true
-          echo '=== CADDY ROUTE ==='; docker exec sgr-proxy-prod sh -lc "grep -n -A8 -B3 'SHOWDEPREMIOS HOMOLOGACAO\|showdepremios-hml' /etc/caddy/Caddyfile || true" 2>&1 || true
+          echo '=== CADDY ROUTE IN CONTAINER ==='; docker exec sgr-proxy-prod sh -lc "grep -n -A8 -B3 'SHOWDEPREMIOS HOMOLOGACAO\|showdepremios-hml' /etc/caddy/Caddyfile || true" 2>&1 || true
           echo '=== CADDY VALIDATE ==='; docker exec sgr-proxy-prod caddy validate --config /etc/caddy/Caddyfile 2>&1 || true
           echo '=== HTTPS LOOPBACK ==='; curl -skv --resolve showdepremios-hml.77-37-40-81.sslip.io:443:127.0.0.1 --max-time 15 https://showdepremios-hml.77-37-40-81.sslip.io/api/ping 2>&1 || true
           echo '=== PRODUCTION LOOPBACK ==='; curl -skv --resolve showdepremios.mskpoeira.com.br:443:127.0.0.1 --max-time 15 https://showdepremios.mskpoeira.com.br/api/ping 2>&1 || true
