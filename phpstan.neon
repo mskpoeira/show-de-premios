@@ -4,6 +4,8 @@ parameters:
         - app
         - database
         - index.php
+    stubFiles:
+        - phpstan-pdo.stub
     excludePaths:
         analyse:
             - app/Views
