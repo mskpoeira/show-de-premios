@@ -1,0 +1,45 @@
+name: Audit PHPStan
+
+on:
+  push:
+    branches:
+      - fix/auditoria-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  phpstan-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pdo_sqlite, pdo_mysql, pdo_pgsql
+          tools: composer
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Capture PHPStan report
+        shell: bash
+        run: |
+          set +e
+          vendor/bin/phpstan analyse app database index.php --level=7 --no-progress --error-format=table > AUDIT-PHPSTAN.txt 2>&1
+          STATUS=$?
+          echo "PHPStan exit code: $STATUS" >> AUDIT-PHPSTAN.txt
+          exit 0
+      - name: Commit audit report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add AUDIT-PHPSTAN.txt
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'chore(audit): capture PHPStan findings [skip ci]'
+          git push origin HEAD:fix/auditoria-20260914
