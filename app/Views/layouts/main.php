@@ -1,12 +1,30 @@
 <?php
 use App\Core\Auth;
+use App\Core\Csrf;
 use App\Core\View;
+
+$csrfToken = Csrf::getToken();
+$currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '/';
+if (str_starts_with($currentUri, '/showdepremios/')) {
+    $currentUri = substr($currentUri, strlen('/showdepremios'));
+} elseif ($currentUri === '/showdepremios') {
+    $currentUri = '/';
+}
+
+$isDashboard = ($currentUri === '/' || str_starts_with($currentUri, '/painel'));
+$isVendas = (str_starts_with($currentUri, '/comprar') || str_starts_with($currentUri, '/pedido'));
+$isCartelas = str_starts_with($currentUri, '/cartelas');
+$isSorteio = (str_starts_with($currentUri, '/sorteio') || str_starts_with($currentUri, '/locutor'));
+$isCaixa = (str_starts_with($currentUri, '/caixa') || str_starts_with($currentUri, '/dia') || str_starts_with($currentUri, '/rodada'));
+$isRelatorios = str_starts_with($currentUri, '/relatorios');
+$isAdminSection = (str_starts_with($currentUri, '/configuracoes') || str_starts_with($currentUri, '/auditoria') || str_starts_with($currentUri, '/backup'));
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= View::e($csrfToken) ?>">
     <title><?= View::e($title ?? 'Show de Prêmios') ?></title>
     <link rel="icon" type="image/svg+xml" href="<?= View::url('assets/icons/icon.svg') ?>">
     <link rel="manifest" href="<?= View::url('manifest.json') ?>">
@@ -17,10 +35,11 @@ use App\Core\View;
     <link rel="stylesheet" href="<?= View::url('assets/css/style.css') ?>?v=<?= file_exists(__DIR__ . '/../../public/assets/css/style.css') ? filemtime(__DIR__ . '/../../public/assets/css/style.css') : time() ?>">
     <link rel="stylesheet" href="<?= View::url('assets/css/print.css') ?>" media="print">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        window.SHOW_DE_PREMIOS_CSRF = <?= json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    </script>
 </head>
 <body>
-
-    <!-- Header & Topbar -->
     <header class="app-header">
         <div class="topbar-container">
             <a href="<?= View::url('painel') ?>" class="brand-title">
@@ -30,67 +49,38 @@ use App\Core\View;
 
             <div class="user-nav">
                 <?php if (Auth::check()): ?>
-                    <span class="user-role-badge" style="<?= Auth::roleBadgeColor() ?> font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 6px;"><?= View::e(Auth::roleLabel()) ?></span>
+                    <span class="user-role-badge" style="<?= Auth::roleBadgeColor() ?> font-weight:700;padding:0.25rem 0.6rem;border-radius:6px;"><?= View::e(Auth::roleLabel()) ?></span>
                     <span>Olá, <strong><?= View::e(Auth::user()['name']) ?></strong></span>
-                    <a href="<?= View::url('logout') ?>" class="nav-link" title="Sair do sistema">Sair ➔</a>
+                    <form method="POST" action="<?= View::url('logout') ?>" style="display:inline;margin:0;">
+                        <?= Csrf::inputField() ?>
+                        <button type="submit" class="nav-link" style="background:none;border:0;cursor:pointer;font:inherit;" title="Sair do sistema">Sair ➔</button>
+                    </form>
                 <?php endif; ?>
             </div>
         </div>
     </header>
 
-    <!-- Navigation Menu (5 Centros de Controle Unificados) -->
-    <?php if (Auth::check()): 
-        $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '/';
-        if (str_starts_with($currentUri, '/showdepremios/')) {
-            $currentUri = substr($currentUri, strlen('/showdepremios'));
-        } elseif ($currentUri === '/showdepremios') {
-            $currentUri = '/';
-        }
-
-        $isPainel = ($currentUri === '/' || str_starts_with($currentUri, '/painel') || str_starts_with($currentUri, '/relatorios') || str_starts_with($currentUri, '/auditoria'));
-        $isCaixa = (str_starts_with($currentUri, '/caixa') || str_starts_with($currentUri, '/dia') || str_starts_with($currentUri, '/utilidades') || str_starts_with($currentUri, '/rodada'));
-        $isLocutor = str_starts_with($currentUri, '/locutor');
-        $isTelao = str_starts_with($currentUri, '/telao');
-        $isConfig = (str_starts_with($currentUri, '/configuracoes') || str_starts_with($currentUri, '/vendedores') || str_starts_with($currentUri, '/operadores') || str_starts_with($currentUri, '/backup'));
-    ?>
-        <!-- Navigation Menu Oficial (Reorganizado conforme Perfil) -->
-    <?php if (Auth::check()): 
-        $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '/';
-        if (str_starts_with($currentUri, '/showdepremios/')) {
-            $currentUri = substr($currentUri, strlen('/showdepremios'));
-        } elseif ($currentUri === '/showdepremios') {
-            $currentUri = '/';
-        }
-
-        $isDashboard = ($currentUri === '/' || str_starts_with($currentUri, '/painel'));
-        $isVendas = (str_starts_with($currentUri, '/comprar') || str_starts_with($currentUri, '/pedido'));
-        $isCartelas = str_starts_with($currentUri, '/cartelas');
-        $isSorteio = (str_starts_with($currentUri, '/sorteio') || str_starts_with($currentUri, '/locutor'));
-        $isCaixa = (str_starts_with($currentUri, '/caixa') || str_starts_with($currentUri, '/dia'));
-        $isRelatorios = (str_starts_with($currentUri, '/relatorios') || str_starts_with($currentUri, '/painel?tab=relatorios'));
-        $isAdmin = (str_starts_with($currentUri, '/configuracoes') || str_starts_with($currentUri, '/auditoria') || str_starts_with($currentUri, '/backup'));
-    ?>
+    <?php if (Auth::check()): ?>
     <nav class="sub-nav">
         <ul class="sub-nav-list">
             <li><a href="<?= View::url('painel') ?>" class="<?= $isDashboard ? 'active' : '' ?>">📊 Dashboard</a></li>
             <li><a href="<?= View::url('caixa') ?>" class="<?= $isCaixa ? 'active' : '' ?>">💵 Caixa</a></li>
             <li><a href="<?= View::url('cartelas') ?>" class="<?= $isCartelas ? 'active' : '' ?>">🎟️ Cartelas</a></li>
-            <li><a href="<?= View::url('sorteio') ?>" class="<?= $isSorteio ? 'active' : '' ?>" style="<?= $isSorteio ? '' : 'color: #0284c7;' ?> font-weight: 800;">🎤 Sorteio Ao Vivo</a></li>
-            <li><a href="<?= View::url('comprar') ?>" target="_blank" class="<?= $isVendas ? 'active' : '' ?>" style="color: #16a34a; font-weight: 700;">🛒 Venda Online ↗</a></li>
-            <li><a href="<?= View::url('telao') ?>" target="_blank" style="color: #d97706; font-weight: 800;" title="Abrir telão do público">📺 Telão Público ↗</a></li>
-            <li><a href="<?= View::url('validar') ?>" target="_blank" style="color: #0f766e; font-weight: 700;">🔍 Validar Cartela ↗</a></li>
+            <?php if (Auth::canOperateDraw()): ?>
+                <li><a href="<?= View::url('sorteio') ?>" class="<?= $isSorteio ? 'active' : '' ?>" style="<?= $isSorteio ? '' : 'color:#0284c7;' ?>font-weight:800;">🎤 Sorteio Ao Vivo</a></li>
+            <?php endif; ?>
+            <li><a href="<?= View::url('comprar') ?>" target="_blank" class="<?= $isVendas ? 'active' : '' ?>" style="color:#16a34a;font-weight:700;">🛒 Venda Online ↗</a></li>
+            <li><a href="<?= View::url('telao') ?>" target="_blank" style="color:#d97706;font-weight:800;" title="Abrir telão do público">📺 Telão Público ↗</a></li>
+            <li><a href="<?= View::url('validar') ?>" target="_blank" style="color:#0f766e;font-weight:700;">🔍 Validar Cartela ↗</a></li>
             <li><a href="<?= View::url('relatorios') ?>" class="<?= $isRelatorios ? 'active' : '' ?>">📑 Relatórios</a></li>
-            <?php if (Auth::isAdmin() || Auth::isMaster()): ?>
-                <li><a href="<?= View::url('configuracoes') ?>" class="<?= $isAdmin ? 'active' : '' ?>">⚙️ Administração</a></li>
+            <?php if (Auth::isAdmin()): ?>
+                <li><a href="<?= View::url('configuracoes') ?>" class="<?= $isAdminSection ? 'active' : '' ?>">⚙️ Administração</a></li>
             <?php endif; ?>
         </ul>
     </nav>
     <?php endif; ?>
-    <?php endif; ?>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Flash Alerts -->
         <?php if (!empty($flashSuccess)): ?>
             <div class="alert alert-success">✅ <?= View::e($flashSuccess) ?></div>
         <?php endif; ?>
@@ -101,7 +91,6 @@ use App\Core\View;
             <div class="alert alert-warning">ℹ️ <?= View::e($flashWarning) ?></div>
         <?php endif; ?>
 
-        <!-- Legend -->
         <div class="legend-box no-print">
             <span>✎ <strong>Fundo amarelo claro</strong> = Campo editável pelo usuário</span>
         </div>
@@ -109,7 +98,6 @@ use App\Core\View;
         <?= $slot ?>
     </main>
 
-    <!-- Footer -->
     <footer class="app-footer">
         <p>Show de Prêmios &copy; <?= date('Y') ?> &bull; Sistema Seguro &bull; Início Histórico: 06/09/2026</p>
     </footer>
