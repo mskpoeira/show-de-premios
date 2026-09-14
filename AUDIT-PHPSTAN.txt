@@ -1,8 +1,7 @@
+Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios/phpstan.neon.
 ::error file=app/Controllers/CashController.php,line=88,col=0::Ternary operator condition is always true.
 ::error file=app/Controllers/DashboardController.php,line=13,col=0::Method App\Controllers\DashboardController::index() has no return type specified.
-::error file=app/Controllers/DisplayController.php,line=28,col=0::Method App\Controllers\DisplayController::publicData() return type has no value type specified in iterable type array.
 ::error file=app/Controllers/DrawController.php,line=165,col=0::Method App\Controllers\DrawController::json() has parameter $data with no value type specified in iterable type array.
-::error file=app/Controllers/OnlineSalesController.php,line=299,col=0::Method App\Controllers\OnlineSalesController::activeDigitalEvent() return type has no value type specified in iterable type array.
 ::error file=app/Controllers/OnlineSalesController.php,line=303,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/OnlineSalesController.php,line=306,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/RoundController.php,line=354,col=0::Call to function in_array() with arguments 'CHECKING'|'IN_PROGRESS'|'OPEN'|'PAUSED', array{'OPEN', 'IN_PROGRESS', 'PAUSED', 'CHECKING'} and true will always evaluate to true.
@@ -13,18 +12,13 @@
 ::error file=app/Controllers/SettingsController.php,line=60,col=0::Offset 'orders' on array{sales: int, rounds: int, cash_movements: int, cash_closings: int, operation_days: int, sellers: int, audit_logs: int, orders: int, ...} on left side of ?? always exists and is not nullable.
 ::error file=app/Controllers/SettingsController.php,line=80,col=0::Parameter #2 $timestamp of function date expects int|null, int|false given.
 ::error file=app/Controllers/SettingsController.php,line=170,col=0::Method App\Controllers\SettingsController::saveSettings() has parameter $updates with no value type specified in iterable type array.
-::error file=app/Controllers/SpeakerController.php,line=263,col=0::Method App\Controllers\SpeakerController::resolveDrawForRound() return type has no value type specified in iterable type array.
-::error file=app/Controllers/SpeakerController.php,line=276,col=0::Method App\Controllers\SpeakerController::activeEvent() return type has no value type specified in iterable type array.
 ::error file=app/Controllers/SpeakerController.php,line=279,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/SpeakerController.php,line=282,col=0::Method App\Controllers\SpeakerController::findRound() return type has no value type specified in iterable type array.
 ::error file=app/Controllers/SpeakerController.php,line=291,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/SpeakerController.php,line=294,col=0::Method App\Controllers\SpeakerController::jsonResponse() has parameter $data with no value type specified in iterable type array.
 ::error file=app/Controllers/UtilitiesController.php,line=32,col=0::Ternary operator condition is always true.
 ::error file=app/Controllers/ValidationController.php,line=185,col=0::Method App\Controllers\ValidationController::logValidation() has parameter $ticket with no value type specified in iterable type array.
 ::error file=app/Controllers/ValidationController.php,line=185,col=0::Method App\Controllers\ValidationController::logValidation() has parameter $user with no value type specified in iterable type array.
-::error file=app/Core/Auth.php,line=72,col=0::Method App\Core\Auth::user() return type has no value type specified in iterable type array.
 ::error file=app/Core/Auth.php,line=201,col=0::Method App\Core\Auth::writeSession() has parameter $user with no value type specified in iterable type array.
-::error file=app/Core/Router.php,line=7,col=0::Property App\Core\Router::$routes type has no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=9,col=0::Method App\Core\Router::get() has parameter $handler with no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=9,col=0::Method App\Core\Router::get() has parameter $middlewares with no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=14,col=0::Method App\Core\Router::post() has parameter $handler with no value type specified in iterable type array.
@@ -36,60 +30,28 @@
 ::error file=app/Core/View.php,line=7,col=0::Method App\Core\View::render() has parameter $data with no value type specified in iterable type array.
 ::error file=app/Services/AuditService.php,line=10,col=0::Method App\Services\AuditService::log() has parameter $newValues with no value type specified in iterable type array.
 ::error file=app/Services/AuditService.php,line=10,col=0::Method App\Services\AuditService::log() has parameter $oldValues with no value type specified in iterable type array.
-::error file=app/Services/BackupService.php,line=15,col=0::Property App\Services\BackupService::$tables type has no value type specified in iterable type array.
-::error file=app/Services/BackupService.php,line=42,col=0::Method App\Services\BackupService::createBackupData() return type has no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=104,col=0::Parameter #2 $subject of function preg_match expects string, int|string given.
 ::error file=app/Services/BackupService.php,line=106,col=0::Parameter #1 $callback of function array_map expects (callable(int|string): mixed)|null, Closure(string): non-falsy-string given.
 ::error file=app/Services/BackupService.php,line=107,col=0::Parameter #1 $callback of function array_map expects (callable(int|string): mixed)|null, Closure(string): non-falsy-string given.
-::error file=app/Services/BackupService.php,line=128,col=0::Method App\Services\BackupService::cleanDatabaseKeepUsersAndSellers() return type has no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=138,col=0::Method App\Services\BackupService::cleanDatabaseSelective() has parameter $selected with no value type specified in iterable type array.
-::error file=app/Services/BackupService.php,line=138,col=0::Method App\Services\BackupService::cleanDatabaseSelective() return type has no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=201,col=0::Method App\Services\BackupService::cleanTables() has parameter $tables with no value type specified in iterable type array.
-::error file=app/Services/BackupService.php,line=201,col=0::Method App\Services\BackupService::cleanTables() return type has no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=209,col=0::Cannot call method fetchColumn() on PDOStatement|false.
-::error file=app/Services/CashService.php,line=19,col=0::Method App\Services\CashService::calculateDayCash() return type has no value type specified in iterable type array.
 ::error file=app/Services/CashService.php,line=117,col=0::Offset 'inflows' might not exist on array{name: 'Cartão de Crédito'|'Cartão de Débito', icon: '💳', inflows: float, outflows: float, sales: float, total: 0.0}|array{name: 'Dinheiro em Espécie', icon: '💵', inflows: float, outflows: float, sales: float, total: 0.0}|array{name: non-falsy-string, icon: '⚡'|'💰', inflows: float, outflows: float, sales: float, total: 0.0}|array{outflows: float}.
 ::error file=app/Services/CashService.php,line=117,col=0::Offset 'sales' might not exist on array{name: 'Cartão de Crédito'|'Cartão de Débito', icon: '💳', inflows: float, outflows: float, sales: float, total: 0.0}|array{name: 'Dinheiro em Espécie', icon: '💵', inflows: float, outflows: float, sales: float, total: 0.0}|array{name: non-falsy-string, icon: '⚡'|'💰', inflows: float, outflows: float, sales: float, total: 0.0}|array{outflows: float}.
 ::error file=app/Services/CashService.php,line=144,col=0::Strict comparison using !== between mixed and null will always evaluate to true.
 ::error file=app/Services/CashService.php,line=145,col=0::Strict comparison using !== between mixed and null will always evaluate to true.
 ::error file=app/Services/CashService.php,line=146,col=0::Strict comparison using !== between mixed and null will always evaluate to true.
 ::error file=app/Services/CashService.php,line=147,col=0::Strict comparison using !== between mixed and null will always evaluate to true.
-::error file=app/Services/EmailService.php,line=13,col=0::Method App\Services\EmailService::sendTicketsByEmail() return type has no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=10,col=0::Method App\Services\GameEngineService::callNumber() return type has no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=67,col=0::Method App\Services\GameEngineService::undoLastNumber() return type has no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=109,col=0::Method App\Services\GameEngineService::registerPhysicalWinner() return type has no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=135,col=0::Method App\Services\GameEngineService::homologate() return type has no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=181,col=0::Method App\Services\GameEngineService::getGameIntelligence() return type has no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=241,col=0::Method App\Services\GameEngineService::getOrCreateActiveDraw() return type has no value type specified in iterable type array.
 ::error file=app/Services/GameEngineService.php,line=317,col=0::Method App\Services\GameEngineService::evaluateRule() has parameter $called with no value type specified in iterable type array.
 ::error file=app/Services/GameEngineService.php,line=317,col=0::Method App\Services\GameEngineService::evaluateRule() has parameter $cells with no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=317,col=0::Method App\Services\GameEngineService::evaluateRule() return type has no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=372,col=0::Method App\Services\GameEngineService::detectWinnerCandidates() return type has no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=402,col=0::Method App\Services\GameEngineService::getDraw() return type has no value type specified in iterable type array.
-::error file=app/Services/PixService.php,line=137,col=0::Method App\Services\PixService::validateSemantic() return type has no value type specified in iterable type array.
-::error file=app/Services/PixService.php,line=283,col=0::Method App\Services\PixService::getConfig() return type has no value type specified in iterable type array.
 ::error file=app/Services/PixService.php,line=287,col=0::Ternary operator condition is always true.
-::error file=app/Services/PricingService.php,line=10,col=0::Method App\Services\PricingService::getRuleForDate() return type has no value type specified in iterable type array.
-::error file=app/Services/PricingService.php,line=40,col=0::Method App\Services\PricingService::getActiveRule() return type has no value type specified in iterable type array.
 ::error file=app/Services/PricingService.php,line=45,col=0::Method App\Services\PricingService::calculate() has parameter $rule with no value type specified in iterable type array.
-::error file=app/Services/PricingService.php,line=45,col=0::Method App\Services\PricingService::calculate() return type has no value type specified in iterable type array.
-::error file=app/Services/PrizeSuggestionService.php,line=17,col=0::Method App\Services\PrizeSuggestionService::getSettings() return type has no value type specified in iterable type array.
-::error file=app/Services/PrizeSuggestionService.php,line=46,col=0::Method App\Services\PrizeSuggestionService::calculateNextRoundSuggestion() return type has no value type specified in iterable type array.
-::error file=app/Services/ReportService.php,line=10,col=0::Method App\Services\ReportService::getDayReport() return type has no value type specified in iterable type array.
-::error file=app/Services/ReportService.php,line=97,col=0::Method App\Services\ReportService::getPeriodReport() return type has no value type specified in iterable type array.
-::error file=app/Services/ReportService.php,line=162,col=0::Method App\Services\ReportService::getSellerRanking() return type has no value type specified in iterable type array.
-::error file=app/Services/ReportService.php,line=217,col=0::Method App\Services\ReportService::getSellerStatement() return type has no value type specified in iterable type array.
-::error file=app/Services/ReportService.php,line=276,col=0::Method App\Services\ReportService::getCashStatement() return type has no value type specified in iterable type array.
 ::error file=app/Services/ReportService.php,line=301,col=0::Method App\Services\ReportService::exportCsv() has parameter $data with no value type specified in iterable type array.
 ::error file=app/Services/ReportService.php,line=301,col=0::Method App\Services\ReportService::exportCsv() has parameter $headers with no value type specified in iterable type array.
 ::error file=app/Services/ReportService.php,line=308,col=0::Parameter #1 $stream of function fprintf expects resource, resource|false given.
 ::error file=app/Services/ReportService.php,line=310,col=0::Parameter #1 $stream of function fputcsv expects resource, resource|false given.
 ::error file=app/Services/ReportService.php,line=313,col=0::Parameter #1 $stream of function fputcsv expects resource, resource|false given.
 ::error file=app/Services/ReportService.php,line=316,col=0::Parameter #1 $stream of function fclose expects resource, resource|false given.
-::error file=app/Services/TicketService.php,line=26,col=0::Method App\Services\TicketService::getNextSequenceNumber() return type has no value type specified in iterable type array.
-::error file=app/Services/TicketService.php,line=66,col=0::Method App\Services\TicketService::generateBingo75Matrix() return type has no value type specified in iterable type array.
-::error file=app/Services/TicketService.php,line=99,col=0::Method App\Services\TicketService::createTicket() return type has no value type specified in iterable type array.
-::error file=app/Services/TicketService.php,line=224,col=0::Method App\Services\TicketService::getTicketForPrint() return type has no value type specified in iterable type array.
 ::error file=app/Views/audit/consultas.php,line=27,col=0::Variable $filters might not be defined.
 ::error file=app/Views/audit/consultas.php,line=32,col=0::Variable $filters might not be defined.
 ::error file=app/Views/audit/consultas.php,line=37,col=0::Variable $filters might not be defined.
@@ -307,17 +269,6 @@
  ------ ------------------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
-  Line   app/Controllers/DisplayController.php                                  
- ------ ----------------------------------------------------------------------- 
-  28     Method App\Controllers\DisplayController::publicData() return type     
-         has no value type specified in iterable type array.                    
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
   Line   app/Controllers/DrawController.php                                     
  ------ ----------------------------------------------------------------------- 
   165    Method App\Controllers\DrawController::json() has parameter $data      
@@ -328,20 +279,14 @@
          terable-type                                                           
  ------ ----------------------------------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Controllers/OnlineSalesController.php                              
- ------ ----------------------------------------------------------------------- 
-  299    Method App\Controllers\OnlineSalesController::activeDigitalEvent()     
-         return type has no value type specified in iterable type array.        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  303    Cannot call method fetch() on PDOStatement|false.                      
-         🪪  method.nonObject                                                   
-  306    Cannot call method fetch() on PDOStatement|false.                      
-         🪪  method.nonObject                                                   
- ------ ----------------------------------------------------------------------- 
+ ------ --------------------------------------------------- 
+  Line   app/Controllers/OnlineSalesController.php          
+ ------ --------------------------------------------------- 
+  303    Cannot call method fetch() on PDOStatement|false.  
+         🪪  method.nonObject                               
+  306    Cannot call method fetch() on PDOStatement|false.  
+         🪪  method.nonObject                               
+ ------ --------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Controllers/RoundController.php                                    
@@ -396,26 +341,8 @@
  ------ ----------------------------------------------------------------------- 
   Line   app/Controllers/SpeakerController.php                                  
  ------ ----------------------------------------------------------------------- 
-  263    Method App\Controllers\SpeakerController::resolveDrawForRound()        
-         return type has no value type specified in iterable type array.        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  276    Method App\Controllers\SpeakerController::activeEvent() return type    
-         has no value type specified in iterable type array.                    
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   279    Cannot call method fetch() on PDOStatement|false.                      
          🪪  method.nonObject                                                   
-  282    Method App\Controllers\SpeakerController::findRound() return type has  
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   291    Cannot call method fetch() on PDOStatement|false.                      
          🪪  method.nonObject                                                   
   294    Method App\Controllers\SpeakerController::jsonResponse() has           
@@ -454,12 +381,6 @@
  ------ ----------------------------------------------------------------------- 
   Line   app/Core/Auth.php                                                      
  ------ ----------------------------------------------------------------------- 
-  72     Method App\Core\Auth::user() return type has no value type specified   
-         in iterable type array.                                                
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   201    Method App\Core\Auth::writeSession() has parameter $user with no       
          value type specified in iterable type array.                           
          🪪  missingType.iterableValue                                          
@@ -471,12 +392,6 @@
  ------ ----------------------------------------------------------------------- 
   Line   app/Core/Router.php                                                    
  ------ ----------------------------------------------------------------------- 
-  7      Property App\Core\Router::$routes type has no value type specified in  
-         iterable type array.                                                   
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   9      Method App\Core\Router::get() has parameter $handler with no value     
          type specified in iterable type array.                                 
          🪪  missingType.iterableValue                                          
@@ -565,18 +480,6 @@
  ------ ----------------------------------------------------------------------- 
   Line   app/Services/BackupService.php                                         
  ------ ----------------------------------------------------------------------- 
-  15     Property App\Services\BackupService::$tables type has no value type    
-         specified in iterable type array.                                      
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  42     Method App\Services\BackupService::createBackupData() return type has  
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   104    Parameter #2 $subject of function preg_match expects string,           
          int|string given.                                                      
          🪪  argument.type                                                      
@@ -594,21 +497,9 @@
          💡  Type #1 from the union: Type string of parameter #1 $c of passed   
          callable needs to be same or wider than parameter type int|string of   
          accepting callable.                                                    
-  128    Method App\Services\BackupService::cleanDatabaseKeepUsersAndSellers()  
-         return type has no value type specified in iterable type array.        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   138    Method App\Services\BackupService::cleanDatabaseSelective() has        
          parameter $selected with no value type specified in iterable type      
          array.                                                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  138    Method App\Services\BackupService::cleanDatabaseSelective() return     
-         type has no value type specified in iterable type array.               
          🪪  missingType.iterableValue                                          
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
@@ -619,107 +510,48 @@
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
-  201    Method App\Services\BackupService::cleanTables() return type has no    
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   209    Cannot call method fetchColumn() on PDOStatement|false.                
          🪪  method.nonObject                                                   
  ------ ----------------------------------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/CashService.php                                           
- ------ ----------------------------------------------------------------------- 
-  19     Method App\Services\CashService::calculateDayCash() return type has    
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  117    Offset 'inflows' might not exist on array{name: 'Cartão de             
-         Crédito'|'Cartão de Débito', icon: '💳', inflows: float, outflows:     
-         float, sales: float, total: 0.0}|array{name: 'Dinheiro em Espécie',    
-         icon: '💵', inflows: float, outflows: float, sales: float, total:      
-         0.0}|array{name: non-falsy-string, icon: '⚡'|'💰', inflows: float,    
-         outflows: float, sales: float, total: 0.0}|array{outflows: float}.     
-         🪪  offsetAccess.notFound                                              
-  117    Offset 'sales' might not exist on array{name: 'Cartão de               
-         Crédito'|'Cartão de Débito', icon: '💳', inflows: float, outflows:     
-         float, sales: float, total: 0.0}|array{name: 'Dinheiro em Espécie',    
-         icon: '💵', inflows: float, outflows: float, sales: float, total:      
-         0.0}|array{name: non-falsy-string, icon: '⚡'|'💰', inflows: float,    
-         outflows: float, sales: float, total: 0.0}|array{outflows: float}.     
-         🪪  offsetAccess.notFound                                              
-  144    Strict comparison using !== between mixed and null will always         
-         evaluate to true.                                                      
-         🪪  notIdentical.alwaysTrue                                            
-         💡  Type null has already been eliminated from mixed.                  
-  145    Strict comparison using !== between mixed and null will always         
-         evaluate to true.                                                      
-         🪪  notIdentical.alwaysTrue                                            
-         💡  Type null has already been eliminated from mixed.                  
-  146    Strict comparison using !== between mixed and null will always         
-         evaluate to true.                                                      
-         🪪  notIdentical.alwaysTrue                                            
-         💡  Type null has already been eliminated from mixed.                  
-  147    Strict comparison using !== between mixed and null will always         
-         evaluate to true.                                                      
-         🪪  notIdentical.alwaysTrue                                            
-         💡  Type null has already been eliminated from mixed.                  
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/EmailService.php                                          
- ------ ----------------------------------------------------------------------- 
-  13     Method App\Services\EmailService::sendTicketsByEmail() return type     
-         has no value type specified in iterable type array.                    
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
+ ------ --------------------------------------------------------------------- 
+  Line   app/Services/CashService.php                                         
+ ------ --------------------------------------------------------------------- 
+  117    Offset 'inflows' might not exist on array{name: 'Cartão de           
+         Crédito'|'Cartão de Débito', icon: '💳', inflows: float, outflows:   
+         float, sales: float, total: 0.0}|array{name: 'Dinheiro em Espécie',  
+         icon: '💵', inflows: float, outflows: float, sales: float, total:    
+         0.0}|array{name: non-falsy-string, icon: '⚡'|'💰', inflows: float,  
+         outflows: float, sales: float, total: 0.0}|array{outflows: float}.   
+         🪪  offsetAccess.notFound                                            
+  117    Offset 'sales' might not exist on array{name: 'Cartão de             
+         Crédito'|'Cartão de Débito', icon: '💳', inflows: float, outflows:   
+         float, sales: float, total: 0.0}|array{name: 'Dinheiro em Espécie',  
+         icon: '💵', inflows: float, outflows: float, sales: float, total:    
+         0.0}|array{name: non-falsy-string, icon: '⚡'|'💰', inflows: float,  
+         outflows: float, sales: float, total: 0.0}|array{outflows: float}.   
+         🪪  offsetAccess.notFound                                            
+  144    Strict comparison using !== between mixed and null will always       
+         evaluate to true.                                                    
+         🪪  notIdentical.alwaysTrue                                          
+         💡  Type null has already been eliminated from mixed.                
+  145    Strict comparison using !== between mixed and null will always       
+         evaluate to true.                                                    
+         🪪  notIdentical.alwaysTrue                                          
+         💡  Type null has already been eliminated from mixed.                
+  146    Strict comparison using !== between mixed and null will always       
+         evaluate to true.                                                    
+         🪪  notIdentical.alwaysTrue                                          
+         💡  Type null has already been eliminated from mixed.                
+  147    Strict comparison using !== between mixed and null will always       
+         evaluate to true.                                                    
+         🪪  notIdentical.alwaysTrue                                          
+         💡  Type null has already been eliminated from mixed.                
+ ------ --------------------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Services/GameEngineService.php                                     
  ------ ----------------------------------------------------------------------- 
-  10     Method App\Services\GameEngineService::callNumber() return type has    
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  67     Method App\Services\GameEngineService::undoLastNumber() return type    
-         has no value type specified in iterable type array.                    
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  109    Method App\Services\GameEngineService::registerPhysicalWinner()        
-         return type has no value type specified in iterable type array.        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  135    Method App\Services\GameEngineService::homologate() return type has    
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  181    Method App\Services\GameEngineService::getGameIntelligence() return    
-         type has no value type specified in iterable type array.               
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  241    Method App\Services\GameEngineService::getOrCreateActiveDraw() return  
-         type has no value type specified in iterable type array.               
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   317    Method App\Services\GameEngineService::evaluateRule() has parameter    
          $called with no value type specified in iterable type array.           
          🪪  missingType.iterableValue                                          
@@ -732,86 +564,20 @@
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
          terable-type                                                           
-  317    Method App\Services\GameEngineService::evaluateRule() return type has  
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  372    Method App\Services\GameEngineService::detectWinnerCandidates()        
-         return type has no value type specified in iterable type array.        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  402    Method App\Services\GameEngineService::getDraw() return type has no    
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
  ------ ----------------------------------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/PixService.php                                            
- ------ ----------------------------------------------------------------------- 
-  137    Method App\Services\PixService::validateSemantic() return type has no  
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  283    Method App\Services\PixService::getConfig() return type has no value   
-         type specified in iterable type array.                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  287    Ternary operator condition is always true.                             
-         🪪  ternary.alwaysTrue                                                 
- ------ ----------------------------------------------------------------------- 
+ ------ -------------------------------------------- 
+  Line   app/Services/PixService.php                 
+ ------ -------------------------------------------- 
+  287    Ternary operator condition is always true.  
+         🪪  ternary.alwaysTrue                      
+ ------ -------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Services/PricingService.php                                        
  ------ ----------------------------------------------------------------------- 
-  10     Method App\Services\PricingService::getRuleForDate() return type has   
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  40     Method App\Services\PricingService::getActiveRule() return type has    
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   45     Method App\Services\PricingService::calculate() has parameter $rule    
          with no value type specified in iterable type array.                   
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  45     Method App\Services\PricingService::calculate() return type has no     
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/PrizeSuggestionService.php                                
- ------ ----------------------------------------------------------------------- 
-  17     Method App\Services\PrizeSuggestionService::getSettings() return type  
-         has no value type specified in iterable type array.                    
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  46     Method                                                                 
-         App\Services\PrizeSuggestionService::calculateNextRoundSuggestion()    
-         return type has no value type specified in iterable type array.        
          🪪  missingType.iterableValue                                          
          💡  See:                                                               
          https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
@@ -821,36 +587,6 @@
  ------ ----------------------------------------------------------------------- 
   Line   app/Services/ReportService.php                                         
  ------ ----------------------------------------------------------------------- 
-  10     Method App\Services\ReportService::getDayReport() return type has no   
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  97     Method App\Services\ReportService::getPeriodReport() return type has   
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  162    Method App\Services\ReportService::getSellerRanking() return type has  
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  217    Method App\Services\ReportService::getSellerStatement() return type    
-         has no value type specified in iterable type array.                    
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  276    Method App\Services\ReportService::getCashStatement() return type has  
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   301    Method App\Services\ReportService::exportCsv() has parameter $data     
          with no value type specified in iterable type array.                   
          🪪  missingType.iterableValue                                          
@@ -875,35 +611,6 @@
   316    Parameter #1 $stream of function fclose expects resource,              
          resource|false given.                                                  
          🪪  argument.type                                                      
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/TicketService.php                                         
- ------ ----------------------------------------------------------------------- 
-  26     Method App\Services\TicketService::getNextSequenceNumber() return      
-         type has no value type specified in iterable type array.               
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  66     Method App\Services\TicketService::generateBingo75Matrix() return      
-         type has no value type specified in iterable type array.               
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  99     Method App\Services\TicketService::createTicket() return type has no   
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  224    Method App\Services\TicketService::getTicketForPrint() return type     
-         has no value type specified in iterable type array.                    
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
  ------ ----------------------------------------------------------------------- 
 
  ------ -------------------------------------------- 
@@ -1441,6 +1148,6 @@
          🪪  method.nonObject                                     
  ------ --------------------------------------------------------- 
 
- [ERROR] Found 293 errors                                                       
+ [ERROR] Found 254 errors                                                       
 
 PHPStan exit code: 1
