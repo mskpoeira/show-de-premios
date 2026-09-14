@@ -25,27 +25,28 @@ class AuthController
 
     public function login(): void
     {
-        $login = trim($_POST['login'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $login = trim((string)($_POST['login'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
 
-        if (empty($login) || empty($password)) {
+        if ($login === '' || $password === '') {
             Response::redirect('/login', null, 'Informe login e senha.');
         }
 
         if (Auth::attempt($login, $password)) {
             AuditService::log('LOGIN', 'users', Auth::id(), null, ['login' => $login]);
             Response::redirect('/painel', 'Bem-vindo ao Show de Prêmios!');
-        } else {
-            Response::redirect('/login', null, 'Login ou senha incorretos.');
         }
+
+        usleep(300000);
+        Response::redirect('/login', null, 'Login ou senha incorretos.');
     }
 
     public function logout(): void
     {
         if (Auth::check()) {
             AuditService::log('LOGOUT', 'users', Auth::id());
-            Auth::logout();
         }
+        Auth::logout();
         Response::redirect('/login', 'Sessão encerrada com sucesso.');
     }
 
@@ -55,7 +56,10 @@ class AuthController
             Response::redirect('/login', null, 'O sistema já foi inicializado.');
         }
 
-        View::render('auth/setup', ['title' => 'Instalação Inicial — Show de Prêmios'], false);
+        View::render('auth/setup', [
+            'title' => 'Instalação Inicial — Show de Prêmios',
+            'setupTokenRequired' => trim((string)getenv('APP_SETUP_TOKEN')) !== '',
+        ], false);
     }
 
     public function setupAdmin(): void
@@ -64,17 +68,25 @@ class AuthController
             Response::redirect('/login', null, 'O sistema já possui administrador cadastrado.');
         }
 
-        $name = trim($_POST['name'] ?? '');
-        $login = trim($_POST['login'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $passwordConfirm = $_POST['password_confirm'] ?? '';
+        $expectedSetupToken = trim((string)getenv('APP_SETUP_TOKEN'));
+        if ($expectedSetupToken !== '') {
+            $provided = trim((string)($_POST['setup_token'] ?? ''));
+            if ($provided === '' || !hash_equals($expectedSetupToken, $provided)) {
+                Response::redirect('/setup', null, 'Token de instalação inválido.');
+            }
+        }
 
-        if (empty($name) || empty($login) || empty($password)) {
+        $name = trim((string)($_POST['name'] ?? ''));
+        $login = trim((string)($_POST['login'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
+        $passwordConfirm = (string)($_POST['password_confirm'] ?? '');
+
+        if ($name === '' || $login === '' || $password === '') {
             Response::redirect('/setup', null, 'Preencha todos os campos obrigatórios.');
         }
 
-        if (strlen($password) < 6) {
-            Response::redirect('/setup', null, 'A senha deve conter no mínimo 6 caracteres.');
+        if (strlen($password) < 10) {
+            Response::redirect('/setup', null, 'A senha inicial deve conter no mínimo 10 caracteres.');
         }
 
         if ($password !== $passwordConfirm) {
@@ -84,14 +96,13 @@ class AuthController
         $pdo = Database::getConnection();
         $hash = Auth::hashPassword($password);
 
-        $stmt = $pdo->prepare("INSERT INTO users (name, login, password_hash, role, active) VALUES (?, ?, ?, 'ADMIN', 1)");
+        $stmt = $pdo->prepare("INSERT INTO users (name, login, password_hash, role, active) VALUES (?, ?, ?, 'MASTER', 1)");
         $stmt->execute([$name, $login, $hash]);
+        $newId = (int)$pdo->lastInsertId();
 
-        AuditService::log('SETUP_ADMIN', 'users', (int)$pdo->lastInsertId(), null, ['login' => $login]);
-
-        // Auto login
+        AuditService::log('SETUP_MASTER', 'users', $newId, null, ['login' => $login]);
         Auth::attempt($login, $password);
 
-        Response::redirect('/painel', 'Administrador configurado com sucesso! Bem-vindo ao sistema.');
+        Response::redirect('/painel', 'Administrador Master configurado com sucesso.');
     }
 }

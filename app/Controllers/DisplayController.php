@@ -8,119 +8,115 @@ use App\Core\Database;
 use App\Core\View;
 use App\Services\PixService;
 use App\Services\PricingService;
+use PDO;
 
 class DisplayController
 {
     public function index(): void
     {
-        $data = self::getCurrentDisplayData();
-        View::render('display/telao', $data, false);
+        View::render('display/telao', self::publicData(), false);
     }
 
     public function status(): void
     {
-        $data = self::getCurrentDisplayData();
-        $round = $data['round'];
-        $prizesCount = $round ? (int)($round['prizes_count'] ?? 2) : 2;
-        if ($prizesCount < 1) $prizesCount = 1;
-        
-        $p1 = (float)($round['prize_1'] ?? 0);
-        $p2 = (float)($round['prize_2'] ?? 0);
-        $p3 = (float)($round['prize_3'] ?? 0);
-        $totalPrizes = $p1 + $p2 + $p3;
-
-        $roundNumber = $round ? (int)$round['round_number'] : 1;
-        $roundName = $round && !empty($round['round_name']) ? trim($round['round_name']) : ('RODADA ' . $roundNumber);
-        $cardColor = !empty($round['card_color']) ? trim((string)$round['card_color']) : 'Amarela';
-
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store, no-cache, must-revalidate');
-        echo json_encode([
-            'status' => 'success',
-            'data' => [
-                'day_date' => $data['day'] ? View::date($data['day']['operation_date']) : null,
-                'round_number' => $roundNumber,
-                'round_name' => $roundName,
-                'card_color' => $cardColor,
-                'prizes_count' => $prizesCount,
-                'round_status' => $round ? $round['status'] : 'NO_ROUND',
-                'prize_1' => View::money($p1),
-                'prize_1_title' => $round ? ($round['prize_1_title'] ?? '') : '',
-                'prize_2' => View::money($p2),
-                'prize_2_title' => $round ? ($round['prize_2_title'] ?? '') : '',
-                'prize_3' => View::money($p3),
-                'prize_3_title' => $round ? ($round['prize_3_title'] ?? '') : '',
-                'total_prizes' => View::money($totalPrizes),
-                'winner_1_name' => $round ? ($round['winner_1_name'] ?? $round['winner_name'] ?? '') : '',
-                'seller_1_name' => $round ? ($round['seller_1_name'] ?? '') : '',
-                'winner_2_name' => $round ? ($round['winner_2_name'] ?? '') : '',
-                'seller_2_name' => $round ? ($round['seller_2_name'] ?? '') : '',
-                'winner_3_name' => $round ? ($round['winner_3_name'] ?? '') : '',
-                'seller_3_name' => $round ? ($round['seller_3_name'] ?? '') : '',
-                'winner_name' => $round ? ($round['winner_1_name'] ?? $round['winner_name'] ?? '') : '',
-                'server_time' => date('H:i:s'),
-                'single_price' => View::money($data['pricingRule']['single_price']),
-                'bundle_qty' => (int)$data['pricingRule']['bundle_quantity'],
-                'bundle_price' => View::money($data['pricingRule']['bundle_price']),
-                'system_title' => $data['systemTitle'],
-                'pix_key' => $data['pixKey'],
-                'pix_receiver' => $data['pixReceiver'],
-                'pix_description' => $data['pixDescription'] ?? '',
-                'pix_banner_title' => $data['pixBannerTitle'] ?? 'PAGUE COM PIX DIRETO DO SEU LUGAR',
-                'pix_show_on_telao' => $data['pixShowOnTelao'],
-                'pix_payload' => $data['pixPayload'] ?? '',
-                'called_numbers' => !empty($round['called_numbers_json']) ? (json_decode($round['called_numbers_json'], true) ?: []) : [],
-                'last_called_number' => !empty($round['last_called_number']) ? (int)$round['last_called_number'] : null,
-                'last_called_at' => $round['last_called_at'] ?? null,
-                'last_letter' => !empty($round['last_called_number']) ? SpeakerController::getLetterForNumber((int)$round['last_called_number']) : '',
-            ]
-        ], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['status'=>'success','data'=>self::publicData()], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
-    private static function getCurrentDisplayData(): array
+    private static function publicData(): array
     {
-        $pdo = Database::getConnection();
+        $pdo=Database::getConnection();
 
-        // 1. Get open day or latest day
-        $stmtDay = $pdo->query("SELECT * FROM operation_days ORDER BY CASE WHEN status = 'OPEN' THEN 0 ELSE 1 END, operation_date DESC LIMIT 1");
-        $day = $stmtDay->fetch();
+        $eventStmt=$pdo->query("SELECT id,name,event_date,event_time,location,status FROM events WHERE status='ACTIVE' ORDER BY id DESC LIMIT 1");
+        $event=$eventStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
-        $round = null;
+        $day=$pdo->query("SELECT * FROM operation_days ORDER BY CASE WHEN status='OPEN' THEN 0 ELSE 1 END,operation_date DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC) ?: null;
+        $round=null;
         if ($day) {
-            // Find active round or latest round of the day
-            $stmtRound = $pdo->prepare("
-                SELECT * FROM rounds 
-                WHERE operation_day_id = ? 
-                ORDER BY CASE WHEN status IN ('IN_PROGRESS', 'CHECKING', 'PAUSED', 'OPEN') THEN 0 ELSE 1 END, round_number DESC 
-                LIMIT 1
-            ");
-            $stmtRound->execute([$day['id']]);
-            $round = $stmtRound->fetch();
+            $stmt=$pdo->prepare("SELECT * FROM rounds WHERE operation_day_id=? ORDER BY CASE WHEN status IN ('IN_PROGRESS','CHECKING','PAUSED','OPEN') THEN 0 ELSE 1 END,round_number DESC LIMIT 1");
+            $stmt->execute([(int)$day['id']]);
+            $round=$stmt->fetch(PDO::FETCH_ASSOC) ?: null;
         }
 
-        if (!$round) {
-            $stmtRoundFallback = $pdo->query("SELECT * FROM rounds ORDER BY id DESC LIMIT 1");
-            $round = $stmtRoundFallback->fetch() ?: null;
+        $draw=null;
+        $stones=[];
+        $prize=null;
+        if ($event) {
+            if ($round) {
+                $stmt=$pdo->prepare("SELECT * FROM draws WHERE event_id=? AND round_id=? ORDER BY id DESC LIMIT 1");
+                $stmt->execute([(int)$event['id'],(int)$round['id']]);
+                $draw=$stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            }
+            if (!$draw) {
+                $stmt=$pdo->prepare("SELECT * FROM draws WHERE event_id=? ORDER BY CASE WHEN status IN ('IN_PROGRESS','CHECKING','OPEN') THEN 0 ELSE 1 END,id DESC LIMIT 1");
+                $stmt->execute([(int)$event['id']]);
+                $draw=$stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            }
+
+            if ($draw) {
+                $stmt=$pdo->prepare('SELECT number_value,letter,call_order,called_at FROM draw_stones WHERE draw_id=? ORDER BY call_order');
+                $stmt->execute([(int)$draw['id']]);
+                $stones=$stmt->fetchAll(PDO::FETCH_ASSOC);
+                if (!empty($draw['prize_id'])) {
+                    $stmt=$pdo->prepare('SELECT id,title,description,value,order_num FROM prizes WHERE id=? LIMIT 1');
+                    $stmt->execute([(int)$draw['prize_id']]);
+                    $prize=$stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+                }
+            }
         }
 
-        $pricingRule = PricingService::getRuleForDate($day ? $day['operation_date'] : null);
-        $systemTitle = View::systemTitle();
-
-        // PIX settings padronizadas pelo Banco Central do Brasil (BCB)
-        $pixConfig = PixService::getConfig();
+        $pricing=PricingService::getRuleForDate($day['operation_date'] ?? $event['event_date'] ?? null);
+        $pix=PixService::getConfig();
+        $pixEnabled=!in_array(strtolower((string)($pix['show_on_telao'] ?? 'true')), ['false','0','no'], true);
 
         return [
-            'day' => $day ?: null,
-            'round' => $round ?: null,
-            'pricingRule' => $pricingRule,
-            'systemTitle' => $systemTitle,
-            'pixKey' => $pixConfig['key'],
-            'pixReceiver' => $pixConfig['receiver'],
-            'pixDescription' => $pixConfig['description'],
-            'pixBannerTitle' => $pixConfig['banner_title'],
-            'pixShowOnTelao' => $pixConfig['show_on_telao'],
-            'pixPayload' => $pixConfig['payload'],
+            'system_title'=>View::systemTitle(),
+            'event'=>$event ? [
+                'name'=>$event['name'],
+                'date'=>$event['event_date'],
+                'time'=>$event['event_time'],
+                'location'=>$event['location'],
+            ] : null,
+            'day_date'=>$day ? View::date($day['operation_date']) : null,
+            'round'=> $round ? [
+                'id'=>(int)$round['id'],
+                'round_number'=>(int)$round['round_number'],
+                'round_name'=>$round['round_name'] ?: ('Rodada '.(int)$round['round_number']),
+                'card_color'=>$round['card_color'] ?: null,
+            ] : null,
+            'round_status'=>$draw['status'] ?? $round['status'] ?? 'NO_ROUND',
+            'prize'=>$prize ? [
+                'id'=>(int)$prize['id'],
+                'order_num'=>(int)$prize['order_num'],
+                'title'=>$prize['title'],
+                'description'=>$prize['description'],
+                'value'=>(float)$prize['value'],
+                'value_formatted'=>View::money((float)$prize['value']),
+            ] : null,
+            'called_numbers'=>array_map(static fn(array $stone): int => (int)$stone['number_value'],$stones),
+            'called_stones'=>array_map(static fn(array $stone): array => [
+                'number'=>(int)$stone['number_value'],
+                'letter'=>$stone['letter'],
+                'order'=>(int)$stone['call_order'],
+            ],$stones),
+            'last_called_number'=>$draw && $draw['last_called_number'] !== null ? (int)$draw['last_called_number'] : null,
+            'last_letter'=>$draw['last_called_letter'] ?? null,
+            'total_called'=>count($stones),
+            'single_price'=>(float)$pricing['single_price'],
+            'bundle_qty'=>(int)$pricing['bundle_quantity'],
+            'bundle_price'=>(float)$pricing['bundle_price'],
+            'pix'=>[
+                'show'=>$pixEnabled,
+                'banner'=>$pix['banner_title'] ?? 'PAGUE COM PIX DIRETO DO SEU LUGAR',
+                'key'=>$pixEnabled ? (string)($pix['key'] ?? '') : '',
+                'receiver'=>$pixEnabled ? (string)($pix['receiver'] ?? '') : '',
+                'payload'=>$pixEnabled ? (string)($pix['payload'] ?? '') : '',
+            ],
+            'server_time'=>date('H:i:s'),
+            // Deliberadamente NÃO inclui: ganhador, quantidade de ganhadores, empate,
+            // faltam 1/2/3, melhores cartelas, CPF, telefone, vendedor ou claims.
         ];
     }
 }
