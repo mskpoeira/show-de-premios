@@ -24,7 +24,6 @@
 ::error file=app/Controllers/ValidationController.php,line=185,col=0::Method App\Controllers\ValidationController::logValidation() has parameter $user with no value type specified in iterable type array.
 ::error file=app/Core/Auth.php,line=72,col=0::Method App\Core\Auth::user() return type has no value type specified in iterable type array.
 ::error file=app/Core/Auth.php,line=201,col=0::Method App\Core\Auth::writeSession() has parameter $user with no value type specified in iterable type array.
-::error file=app/Core/RateLimiter.php,line=44,col=0::Parameter #2 $data of function fwrite expects string, string|false given.
 ::error file=app/Core/Router.php,line=7,col=0::Property App\Core\Router::$routes type has no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=9,col=0::Method App\Core\Router::get() has parameter $handler with no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=9,col=0::Method App\Core\Router::get() has parameter $middlewares with no value type specified in iterable type array.
@@ -32,12 +31,7 @@
 ::error file=app/Core/Router.php,line=14,col=0::Method App\Core\Router::post() has parameter $middlewares with no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=19,col=0::Method App\Core\Router::add() has parameter $handler with no value type specified in iterable type array.
 ::error file=app/Core/Router.php,line=19,col=0::Method App\Core\Router::add() has parameter $middlewares with no value type specified in iterable type array.
-::error file=app/Core/Session.php,line=65,col=0::Parameter #1 $name of function setcookie expects string, string|false given.
-::error file=app/Core/Session.php,line=67,col=0::Ternary operator condition is always true.
-::error file=app/Core/Session.php,line=68,col=0::Offset 'domain' on array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side of ?? always exists and is not nullable.
-::error file=app/Core/Session.php,line=69,col=0::Offset 'secure' on array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side of ?? always exists and is not nullable.
-::error file=app/Core/Session.php,line=70,col=0::Offset 'httponly' on array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side of ?? always exists and is not nullable.
-::error file=app/Core/Session.php,line=71,col=0::Offset 'samesite' on array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side of ?? always exists and is not nullable.
+::error file=app/Core/Session.php,line=73,col=0::Strict comparison using !== between non-falsy-string and '' will always evaluate to true.
 ::error file=app/Core/StrictPDO.php,line=32,col=0::Method App\Core\StrictPDO::prepare() has parameter $options with no value type specified in iterable type array.
 ::error file=app/Core/View.php,line=7,col=0::Method App\Core\View::render() has parameter $data with no value type specified in iterable type array.
 ::error file=app/Services/AuditService.php,line=10,col=0::Method App\Services\AuditService::log() has parameter $newValues with no value type specified in iterable type array.
@@ -474,14 +468,6 @@
          terable-type                                                           
  ------ ----------------------------------------------------------------------- 
 
- ------ -------------------------------------------------------------------- 
-  Line   app/Core/RateLimiter.php                                            
- ------ -------------------------------------------------------------------- 
-  44     Parameter #2 $data of function fwrite expects string, string|false  
-         given.                                                              
-         🪪  argument.type                                                   
- ------ -------------------------------------------------------------------- 
-
  ------ ----------------------------------------------------------------------- 
   Line   app/Core/Router.php                                                    
  ------ ----------------------------------------------------------------------- 
@@ -529,35 +515,13 @@
          terable-type                                                           
  ------ ----------------------------------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Core/Session.php                                                   
- ------ ----------------------------------------------------------------------- 
-  65     Parameter #1 $name of function setcookie expects string, string|false  
-         given.                                                                 
-         🪪  argument.type                                                      
-  67     Ternary operator condition is always true.                             
-         🪪  ternary.alwaysTrue                                                 
-  68     Offset 'domain' on array{lifetime: int<0, max>, path:                  
-         non-falsy-string, domain: string, secure: bool, httponly: bool,        
-         samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side    
-         of ?? always exists and is not nullable.                               
-         🪪  nullCoalesce.offset                                                
-  69     Offset 'secure' on array{lifetime: int<0, max>, path:                  
-         non-falsy-string, domain: string, secure: bool, httponly: bool,        
-         samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side    
-         of ?? always exists and is not nullable.                               
-         🪪  nullCoalesce.offset                                                
-  70     Offset 'httponly' on array{lifetime: int<0, max>, path:                
-         non-falsy-string, domain: string, secure: bool, httponly: bool,        
-         samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side    
-         of ?? always exists and is not nullable.                               
-         🪪  nullCoalesce.offset                                                
-  71     Offset 'samesite' on array{lifetime: int<0, max>, path:                
-         non-falsy-string, domain: string, secure: bool, httponly: bool,        
-         samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} on left side    
-         of ?? always exists and is not nullable.                               
-         🪪  nullCoalesce.offset                                                
- ------ ----------------------------------------------------------------------- 
+ ------ ------------------------------------------------------------------ 
+  Line   app/Core/Session.php                                              
+ ------ ------------------------------------------------------------------ 
+  73     Strict comparison using !== between non-falsy-string and '' will  
+         always evaluate to true.                                          
+         🪪  notIdentical.alwaysTrue                                       
+ ------ ------------------------------------------------------------------ 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Core/StrictPDO.php                                                 
@@ -1477,6 +1441,6 @@
          🪪  method.nonObject                                     
  ------ --------------------------------------------------------- 
 
- [ERROR] Found 299 errors                                                       
+ [ERROR] Found 293 errors                                                       
 
 PHPStan exit code: 1
