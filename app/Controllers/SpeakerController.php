@@ -9,42 +9,39 @@ use App\Core\Database;
 use App\Core\Response;
 use App\Core\View;
 use App\Services\AuditService;
+use App\Services\GameEngineService;
+use App\Services\PricingService;
+use PDO;
 
 class SpeakerController
 {
     public static function getLetterForNumber(int $num): string
     {
-        if ($num >= 1 && $num <= 15) return 'B';
-        if ($num >= 16 && $num <= 30) return 'I';
-        if ($num >= 31 && $num <= 45) return 'N';
-        if ($num >= 46 && $num <= 60) return 'G';
-        if ($num >= 61 && $num <= 75) return 'O';
-        return '';
+        return GameEngineService::getBingoLetter($num);
     }
 
     public static function generateSpeakerToken(int $roundId, string $date = ''): string
     {
-        $secret = $_ENV['APP_KEY'] ?? 'showdepremios_locutor_celular_2026';
-        return substr(hash_hmac('sha256', "speaker_round_{$roundId}_{$date}", $secret), 0, 24);
+        $secret = trim((string)(getenv('APP_KEY') ?: getenv('SESSION_SECRET') ?: ''));
+        if ($secret === '' || strlen($secret) < 24 || $roundId <= 0 || $date === '') {
+            return '';
+        }
+        return hash_hmac('sha256', "speaker:v1:{$roundId}:{$date}", $secret);
     }
 
     public static function validateSpeakerToken(int $roundId, string $token): bool
     {
-        if (empty($token) || $roundId <= 0) return false;
+        if ($roundId <= 0 || !preg_match('/^[a-f0-9]{64}$/i', $token)) {
+            return false;
+        }
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("
-                SELECT r.id, d.operation_date 
-                FROM rounds r 
-                JOIN operation_days d ON d.id = r.operation_day_id 
-                WHERE r.id = ?
-            ");
+            $stmt = $pdo->prepare("SELECT d.operation_date FROM rounds r JOIN operation_days d ON d.id=r.operation_day_id WHERE r.id=? LIMIT 1");
             $stmt->execute([$roundId]);
-            $round = $stmt->fetch();
-            if (!$round) return false;
-
-            $expected = self::generateSpeakerToken($roundId, (string)$round['operation_date']);
-            return hash_equals($expected, $token);
+            $date = (string)($stmt->fetchColumn() ?: '');
+            if ($date === '') return false;
+            $expected = self::generateSpeakerToken($roundId, $date);
+            return $expected !== '' && hash_equals($expected, strtolower($token));
         } catch (\Throwable $e) {
             return false;
         }
@@ -53,339 +50,253 @@ class SpeakerController
     public function index(): void
     {
         $pdo = Database::getConnection();
-        $roundId = (int)($_GET['id'] ?? $_GET['round_id'] ?? 0);
-
-        // 1. Busca rodada especificada ou a rodada ativa do dia
-        if ($roundId > 0) {
-            $stmt = $pdo->prepare("
-                SELECT r.*, d.status as day_status, d.operation_date 
-                FROM rounds r 
-                JOIN operation_days d ON d.id = r.operation_day_id 
-                WHERE r.id = ?
-            ");
-            $stmt->execute([$roundId]);
-            $round = $stmt->fetch();
-        } else {
-            // Busca a rodada mais relevante (priorizando em andamento, conferência ou aberta)
-            $stmt = $pdo->query("
-                SELECT r.*, d.status as day_status, d.operation_date 
-                FROM rounds r 
-                JOIN operation_days d ON d.id = r.operation_day_id 
-                WHERE d.status = 'OPEN'
-                ORDER BY 
-                    CASE 
-                        WHEN r.status = 'IN_PROGRESS' THEN 0 
-                        WHEN r.status = 'CHECKING' THEN 1 
-                        WHEN r.status = 'PAUSED' THEN 2 
-                        WHEN r.status = 'OPEN' THEN 3 
-                        ELSE 4 
-                    END,
-                    r.round_number DESC 
-                LIMIT 1
-            ");
-            $round = $stmt->fetch();
-        }
-
+        $round = $this->findRound($pdo, (int)($_GET['id'] ?? $_GET['round_id'] ?? 0));
         if (!$round) {
-            // Se ainda não achou, pega a última cadastrada
-            $stmtLast = $pdo->query("
-                SELECT r.*, d.status as day_status, d.operation_date 
-                FROM rounds r 
-                JOIN operation_days d ON d.id = r.operation_day_id 
-                ORDER BY r.id DESC 
-                LIMIT 1
-            ");
-            $round = $stmtLast->fetch();
-        }
-
-        if (!$round) {
-            View::render('speaker/waiting', ['title' => 'Locutor — Aguardando Rodada'], false);
+            View::render('speaker/waiting', ['title'=>'Locutor — Aguardando Rodada'], false);
             return;
         }
 
-        $calledNumbers = [];
-        if (!empty($round['called_numbers_json'])) {
-            $calledNumbers = json_decode($round['called_numbers_json'], true) ?: [];
+        $event = $this->activeEvent($pdo);
+        if (!$event) {
+            View::render('speaker/waiting', ['title'=>'Locutor — Aguardando Evento'], false);
+            return;
         }
 
-        // Preços e regras da rodada
-        $pricingRule = \App\Services\PricingService::getRuleForDate($round['operation_date']);
-        $singlePrice = (!empty($round['single_price']) && (float)$round['single_price'] > 0)
-            ? (float)$round['single_price']
-            : (float)$pricingRule['single_price'];
-        $bundleQty = (!empty($round['bundle_quantity']) && (int)$round['bundle_quantity'] > 0)
-            ? (int)$round['bundle_quantity']
-            : (int)$pricingRule['bundle_quantity'];
-        $bundlePrice = (!empty($round['bundle_price']) && (float)$round['bundle_price'] > 0)
-            ? (float)$round['bundle_price']
-            : (float)$pricingRule['bundle_price'];
+        $draw = GameEngineService::getOrCreateActiveDraw((int)$event['id'], (int)$round['id']);
+        $intelligence = GameEngineService::getGameIntelligence((int)$draw['id']);
+        $calledNumbers = array_map(
+            static fn(array $stone): int => (int)$stone['number_value'],
+            $intelligence['called_numbers'] ?? []
+        );
 
-        // Vendedores para datalist de ganhadores
+        // O draw é a fonte canônica; os campos de round abaixo são apenas para compatibilidade visual da tela antiga.
+        $round['status'] = $draw['status'];
+        $round['last_called_number'] = $draw['last_called_number'];
+        $round['last_called_at'] = !empty($intelligence['last_5_called'][0]['called_at']) ? $intelligence['last_5_called'][0]['called_at'] : null;
+        $round['called_numbers_json'] = json_encode($calledNumbers);
+        $round['draw_id'] = (int)$draw['id'];
+        $round['prize_id'] = (int)($draw['prize_id'] ?? 0);
+
+        $pricingRule = PricingService::getRuleForDate((string)$round['operation_date']);
+        $singlePrice = (!empty($round['single_price']) && (float)$round['single_price'] > 0) ? (float)$round['single_price'] : (float)$pricingRule['single_price'];
+        $bundleQty = (!empty($round['bundle_quantity']) && (int)$round['bundle_quantity'] > 0) ? (int)$round['bundle_quantity'] : (int)$pricingRule['bundle_quantity'];
+        $bundlePrice = (!empty($round['bundle_price']) && (float)$round['bundle_price'] > 0) ? (float)$round['bundle_price'] : (float)$pricingRule['bundle_price'];
+
         $sellers = [];
         try {
-            $sellers = $pdo->query("SELECT id, name, nickname FROM sellers WHERE active = 1 ORDER BY name ASC")->fetchAll();
+            $sellers = $pdo->query("SELECT id,name,nickname FROM sellers WHERE active=1 ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Throwable $e) {}
 
         View::render('speaker/index', [
-            'title' => "Locutor & Sorteio — Rodada {$round['round_number']}",
-            'round' => $round,
-            'calledNumbers' => $calledNumbers,
-            'sellers' => $sellers,
-            'singlePrice' => $singlePrice,
-            'bundleQty' => $bundleQty,
-            'bundlePrice' => $bundlePrice,
+            'title'=>"Locutor & Sorteio — Rodada {$round['round_number']}",
+            'round'=>$round,
+            'draw'=>$draw,
+            'intelligence'=>$intelligence,
+            'calledNumbers'=>$calledNumbers,
+            'sellers'=>$sellers,
+            'singlePrice'=>$singlePrice,
+            'bundleQty'=>$bundleQty,
+            'bundlePrice'=>$bundlePrice,
         ]);
     }
 
     public function callNumber(): void
     {
-        $roundId = (int)($_POST['round_id'] ?? 0);
-        $number = (int)($_POST['number'] ?? 0);
-
-        if ($number < 1 || $number > 75) {
-            self::jsonResponse(['success' => false, 'error' => 'O número sorteado deve estar entre 1 e 75.'], 400);
-        }
-
-        $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT * FROM rounds WHERE id = ?");
-        $stmt->execute([$roundId]);
-        $round = $stmt->fetch();
-
-        if (!$round) {
-            self::jsonResponse(['success' => false, 'error' => 'Rodada não encontrada.'], 404);
-        }
-
-        if ($round['status'] === 'CLOSED') {
-            self::jsonResponse(['success' => false, 'error' => 'Esta rodada já está encerrada. Reabra-a antes de sortear números.'], 400);
-        }
-
-        $calledNumbers = [];
-        if (!empty($round['called_numbers_json'])) {
-            $calledNumbers = json_decode($round['called_numbers_json'], true) ?: [];
-        }
-
-        if (in_array($number, $calledNumbers, true)) {
-            $letter = self::getLetterForNumber($number);
+        $roundId=(int)($_POST['round_id'] ?? 0);
+        $number=(int)($_POST['number'] ?? 0);
+        try {
+            [$drawId,$eventId]=$this->resolveDrawForRound($roundId);
+            $userId=Auth::check() ? Auth::id() : null;
+            $result=GameEngineService::callNumber($drawId,$number,$userId);
+            AuditService::log('BINGO_NUMBER_CALL','draws',$drawId,null,[
+                'round_id'=>$roundId,'event_id'=>$eventId,'number'=>$number,'order'=>$result['call_order'],'source'=>'LOCUTOR'
+            ]);
+            $intel=$result['intelligence'];
             self::jsonResponse([
-                'success' => false, 
-                'already_called' => true,
-                'error' => "A pedra {$letter}-{$number} já foi cantada anteriormente nesta rodada!"
-            ], 400);
+                'success'=>true,
+                'number'=>$number,
+                'letter'=>$result['letter'],
+                'called_numbers'=>array_map(static fn(array $s): int => (int)$s['number_value'],$intel['called_numbers'] ?? []),
+                'total_called'=>(int)($intel['summary']['total_called'] ?? 0),
+                'status'=>$result['requires_homologation'] ? 'CHECKING' : 'IN_PROGRESS',
+                'candidate_winners'=>$result['candidate_winners'],
+                'requires_homologation'=>$result['requires_homologation'],
+                'last_called_at'=>$intel['last_5_called'][0]['called_at'] ?? date('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable $e) {
+            self::jsonResponse(['success'=>false,'error'=>$e->getMessage()],409);
         }
-
-        $calledNumbers[] = $number;
-        $now = date('Y-m-d H:i:s');
-        $letter = self::getLetterForNumber($number);
-
-        // Se a rodada estava OPEN, inicia automaticamente para IN_PROGRESS
-        $newStatus = $round['status'] === 'OPEN' ? 'IN_PROGRESS' : $round['status'];
-
-        $stmtUp = $pdo->prepare("
-            UPDATE rounds 
-            SET called_numbers_json = ?, 
-                last_called_number = ?, 
-                last_called_at = ?,
-                status = ?
-            WHERE id = ?
-        ");
-        $stmtUp->execute([
-            json_encode($calledNumbers),
-            $number,
-            $now,
-            $newStatus,
-            $roundId
-        ]);
-
-        AuditService::log('BINGO_NUMBER_CALL', 'rounds', $roundId, null, [
-            'number' => $number,
-            'letter' => $letter,
-            'total_called' => count($calledNumbers)
-        ]);
-
-        self::jsonResponse([
-            'success' => true,
-            'number' => $number,
-            'letter' => $letter,
-            'called_numbers' => $calledNumbers,
-            'total_called' => count($calledNumbers),
-            'status' => $newStatus,
-            'last_called_at' => $now
-        ]);
     }
 
     public function undoNumber(): void
     {
-        $roundId = (int)($_POST['round_id'] ?? 0);
-        $pdo = Database::getConnection();
-
-        $stmt = $pdo->prepare("SELECT * FROM rounds WHERE id = ?");
-        $stmt->execute([$roundId]);
-        $round = $stmt->fetch();
-
-        if (!$round) {
-            self::jsonResponse(['success' => false, 'error' => 'Rodada não encontrada.'], 404);
+        $roundId=(int)($_POST['round_id'] ?? 0);
+        try {
+            [$drawId]=$this->resolveDrawForRound($roundId);
+            $result=GameEngineService::undoLastNumber($drawId,Auth::check()?Auth::id():null);
+            $intel=$result['intelligence'];
+            $stones=$intel['called_numbers'] ?? [];
+            $last=$stones ? $stones[array_key_last($stones)] : null;
+            AuditService::log('BINGO_NUMBER_UNDO','draws',$drawId,null,['round_id'=>$roundId,'removed_number'=>$result['removed_number'],'source'=>'LOCUTOR']);
+            self::jsonResponse([
+                'success'=>true,
+                'removed_number'=>$result['removed_number'],
+                'called_numbers'=>array_map(static fn(array $s): int => (int)$s['number_value'],$stones),
+                'last_called_number'=>$last['number_value'] ?? null,
+                'last_letter'=>$last['letter'] ?? '',
+                'total_called'=>(int)($intel['summary']['total_called'] ?? 0),
+            ]);
+        } catch (\Throwable $e) {
+            self::jsonResponse(['success'=>false,'error'=>$e->getMessage()],409);
         }
-
-        $calledNumbers = json_decode($round['called_numbers_json'] ?: '[]', true) ?: [];
-        if (empty($calledNumbers)) {
-            self::jsonResponse(['success' => false, 'error' => 'Nenhum número foi cantado ainda nesta rodada.'], 400);
-        }
-
-        $removed = array_pop($calledNumbers);
-        $lastNumber = !empty($calledNumbers) ? end($calledNumbers) : null;
-        $now = date('Y-m-d H:i:s');
-
-        $stmtUp = $pdo->prepare("
-            UPDATE rounds 
-            SET called_numbers_json = ?, 
-                last_called_number = ?, 
-                last_called_at = ?
-            WHERE id = ?
-        ");
-        $stmtUp->execute([
-            json_encode(array_values($calledNumbers)),
-            $lastNumber,
-            $now,
-            $roundId
-        ]);
-
-        AuditService::log('BINGO_NUMBER_UNDO', 'rounds', $roundId, null, [
-            'removed_number' => $removed,
-            'remaining_count' => count($calledNumbers)
-        ]);
-
-        self::jsonResponse([
-            'success' => true,
-            'removed_number' => $removed,
-            'called_numbers' => array_values($calledNumbers),
-            'last_called_number' => $lastNumber,
-            'last_letter' => $lastNumber ? self::getLetterForNumber($lastNumber) : '',
-            'total_called' => count($calledNumbers)
-        ]);
     }
 
     public function updateStatus(): void
     {
-        $roundId = (int)($_POST['round_id'] ?? 0);
-        $newStatus = trim($_POST['status'] ?? '');
-        $allowed = ['OPEN', 'IN_PROGRESS', 'PAUSED', 'CHECKING', 'CLOSED'];
-
-        if (!in_array($newStatus, $allowed, true)) {
-            self::jsonResponse(['success' => false, 'error' => 'Status inválido informado.'], 400);
+        $roundId=(int)($_POST['round_id'] ?? 0);
+        $newStatus=strtoupper(trim((string)($_POST['status'] ?? '')));
+        if (!in_array($newStatus,['OPEN','IN_PROGRESS','PAUSED','CHECKING','CLOSED'],true)) {
+            self::jsonResponse(['success'=>false,'error'=>'Status inválido.'],422);
         }
 
-        $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT * FROM rounds WHERE id = ?");
-        $stmt->execute([$roundId]);
-        $round = $stmt->fetch();
+        try {
+            [$drawId]=$this->resolveDrawForRound($roundId);
+            $pdo=Database::getConnection();
 
-        if (!$round) {
-            self::jsonResponse(['success' => false, 'error' => 'Rodada não encontrada.'], 404);
+            if ($newStatus==='CLOSED') {
+                $pending=$pdo->prepare("SELECT COUNT(*) FROM winner_claims WHERE draw_id=? AND status='PENDING'");
+                $pending->execute([$drawId]);
+                if ((int)$pending->fetchColumn()>0) {
+                    self::jsonResponse(['success'=>false,'error'=>'Existe conferência pendente. O resultado deve ser homologado por Master/Admin antes do encerramento.'],409);
+                }
+                // O locutor/token nunca homologa nem encerra resultado premiado.
+                if (!Auth::check() || !Auth::isAdmin()) {
+                    self::jsonResponse(['success'=>false,'error'=>'Somente Master/Admin pode encerrar definitivamente o sorteio.'],403);
+                }
+            }
+
+            $pdo->beginTransaction();
+            $pdo->prepare("UPDATE draws SET status=?,finished_at=CASE WHEN ?='CLOSED' THEN CURRENT_TIMESTAMP ELSE finished_at END,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+                ->execute([$newStatus,$newStatus,$drawId]);
+            $pdo->prepare("UPDATE rounds SET status=?,closed_at=CASE WHEN ?='CLOSED' THEN CURRENT_TIMESTAMP ELSE NULL END WHERE id=?")
+                ->execute([$newStatus,$newStatus,$roundId]);
+            $pdo->commit();
+            AuditService::log('ROUND_STATUS_CHANGE','draws',$drawId,null,['round_id'=>$roundId,'new_status'=>$newStatus,'source'=>'LOCUTOR']);
+            self::jsonResponse(['success'=>true,'status'=>$newStatus,'message'=>"Status alterado para {$newStatus}."]);
+        } catch (\Throwable $e) {
+            self::jsonResponse(['success'=>false,'error'=>$e->getMessage()],409);
         }
-
-        $closedAt = $newStatus === 'CLOSED' ? date('Y-m-d H:i:s') : ($round['closed_at'] ?? null);
-
-        $stmtUp = $pdo->prepare("UPDATE rounds SET status = ?, closed_at = ? WHERE id = ?");
-        $stmtUp->execute([$newStatus, $closedAt, $roundId]);
-
-        AuditService::log('ROUND_STATUS_CHANGE', 'rounds', $roundId, null, [
-            'old_status' => $round['status'],
-            'new_status' => $newStatus
-        ]);
-
-        if (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json') || isset($_POST['_ajax'])) {
-            self::jsonResponse([
-                'success' => true,
-                'status' => $newStatus,
-                'message' => "Status da rodada alterado para: {$newStatus}"
-            ]);
-        }
-
-        Response::redirect("/locutor?id={$roundId}", "Status da rodada atualizado com sucesso.");
     }
 
+    /**
+     * Compatibilidade com a tela do locutor: registra somente uma REIVINDICAÇÃO FÍSICA pendente.
+     * Nunca homologa nem premia automaticamente.
+     */
     public function saveWinner(): void
     {
-        $roundId = (int)($_POST['round_id'] ?? 0);
-        $prizeIndex = (int)($_POST['prize_index'] ?? 1);
-        $winnerName = trim($_POST['winner_name'] ?? '');
-        $sellerName = trim($_POST['seller_name'] ?? '');
-        $continueNext = !empty($_POST['continue_next']);
+        $roundId=(int)($_POST['round_id'] ?? 0);
+        $prizeIndex=max(1,(int)($_POST['prize_index'] ?? 1));
+        $winnerName=trim((string)($_POST['winner_name'] ?? ''));
+        $sellerName=trim((string)($_POST['seller_name'] ?? ''));
 
-        if (empty($winnerName)) {
-            self::jsonResponse(['success' => false, 'error' => 'Informe o nome do ganhador da cartela.'], 400);
+        try {
+            [$drawId,$eventId]=$this->resolveDrawForRound($roundId);
+            $pdo=Database::getConnection();
+            $prizeStmt=$pdo->prepare('SELECT id FROM prizes WHERE event_id=? AND order_num=? AND active=1 LIMIT 1');
+            $prizeStmt->execute([$eventId,$prizeIndex]);
+            $prizeId=(int)($prizeStmt->fetchColumn() ?: 0);
+            if ($prizeId<=0) {
+                // mantém o prêmio atual como fallback seguro
+                $prizeId=(int)($pdo->query('SELECT prize_id FROM draws WHERE id='.(int)$drawId)->fetchColumn() ?: 0);
+            }
+            if ($prizeId<=0) throw new \RuntimeException('Prêmio não localizado.');
+
+            $claim=GameEngineService::registerPhysicalWinner(
+                $drawId,$prizeId,Auth::check()?(int)Auth::id():0,
+                $winnerName !== '' ? $winnerName : 'PORTADOR DA CARTELA',
+                null,null,$sellerName !== '' ? 'Vendedor informado: '.$sellerName : null
+            );
+            AuditService::log('PHYSICAL_WINNER_CLAIM','draws',$drawId,null,[
+                'round_id'=>$roundId,'prize_id'=>$prizeId,'claim_id'=>$claim['claim_id'],'source'=>'LOCUTOR','checked_by'=>Auth::id()
+            ]);
+            self::jsonResponse([
+                'success'=>true,
+                'status'=>'CHECKING',
+                'message'=>'Ganhador físico registrado para conferência. O resultado aguarda homologação de Master/Admin.',
+                'claim_id'=>$claim['claim_id'],
+            ]);
+        } catch (\Throwable $e) {
+            self::jsonResponse(['success'=>false,'error'=>$e->getMessage()],409);
         }
-
-        $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT * FROM rounds WHERE id = ?");
-        $stmt->execute([$roundId]);
-        $round = $stmt->fetch();
-
-        if (!$round) {
-            self::jsonResponse(['success' => false, 'error' => 'Rodada não encontrada.'], 404);
-        }
-
-        $fieldWinner = "winner_{$prizeIndex}_name";
-        $fieldSeller = "seller_{$prizeIndex}_name";
-
-        // Se continuar para o próximo prêmio, status volta para IN_PROGRESS
-        $newStatus = $continueNext ? 'IN_PROGRESS' : $round['status'];
-
-        $stmtUp = $pdo->prepare("
-            UPDATE rounds 
-            SET {$fieldWinner} = ?, 
-                {$fieldSeller} = ?,
-                status = ?
-            WHERE id = ?
-        ");
-        $stmtUp->execute([
-            $winnerName,
-            $sellerName ?: null,
-            $newStatus,
-            $roundId
-        ]);
-
-        AuditService::log('ROUND_WINNER_SET', 'rounds', $roundId, null, [
-            'prize_index' => $prizeIndex,
-            'winner_name' => $winnerName,
-            'seller_name' => $sellerName,
-            'continued' => $continueNext
-        ]);
-
-        self::jsonResponse([
-            'success' => true,
-            'prize_index' => $prizeIndex,
-            'winner_name' => $winnerName,
-            'seller_name' => $sellerName,
-            'status' => $newStatus,
-            'message' => "Ganhador do {$prizeIndex}º Prêmio registrado com sucesso!"
-        ]);
     }
 
     public function clearNumbers(): void
     {
-        $roundId = (int)($_POST['round_id'] ?? 0);
-        $pdo = Database::getConnection();
+        // A limpeza destrutiva do histórico não pertence ao token de locutor.
+        if (!Auth::check() || !Auth::isAdmin()) {
+            self::jsonResponse(['success'=>false,'error'=>'Somente Master/Admin pode reiniciar um sorteio, e apenas quando não houver resultado homologado.'],403);
+        }
 
-        $stmtUp = $pdo->prepare("
-            UPDATE rounds 
-            SET called_numbers_json = '[]', 
-                last_called_number = NULL, 
-                last_called_at = NULL 
-            WHERE id = ?
-        ");
-        $stmtUp->execute([$roundId]);
+        $roundId=(int)($_POST['round_id'] ?? 0);
+        try {
+            [$drawId]=$this->resolveDrawForRound($roundId);
+            $pdo=Database::getConnection();
+            $hom=$pdo->prepare("SELECT COUNT(*) FROM winner_claims WHERE draw_id=? AND status='HOMOLOGATED'");
+            $hom->execute([$drawId]);
+            if ((int)$hom->fetchColumn()>0) throw new \RuntimeException('Sorteio com resultado homologado não pode ser limpo.');
 
-        AuditService::log('BINGO_NUMBERS_CLEAR', 'rounds', $roundId, null, []);
-
-        self::jsonResponse(['success' => true, 'message' => 'Tabuleiro de pedras resetado com sucesso.']);
+            $pdo->beginTransaction();
+            $pdo->prepare("DELETE FROM winner_claims WHERE draw_id=? AND status='PENDING'")->execute([$drawId]);
+            $pdo->prepare('DELETE FROM draw_stones WHERE draw_id=?')->execute([$drawId]);
+            $pdo->prepare("DELETE FROM ticket_game_state WHERE draw_id=?")->execute([$drawId]);
+            $pdo->prepare("UPDATE draws SET status='OPEN',total_numbers_called=0,last_called_number=NULL,last_called_letter=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$drawId]);
+            $pdo->prepare("UPDATE rounds SET status='OPEN',called_numbers_json='[]',last_called_number=NULL,last_called_at=NULL WHERE id=?")->execute([$roundId]);
+            $pdo->commit();
+            AuditService::log('BINGO_NUMBERS_CLEAR','draws',$drawId,null,['round_id'=>$roundId,'cleared_by'=>Auth::id()]);
+            self::jsonResponse(['success'=>true,'message'=>'Sorteio reiniciado por administrador.']);
+        } catch (\Throwable $e) {
+            if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+            self::jsonResponse(['success'=>false,'error'=>$e->getMessage()],409);
+        }
     }
 
-    private static function jsonResponse(array $data, int $statusCode = 200): void
+    private function resolveDrawForRound(int $roundId): array
+    {
+        if ($roundId<=0) throw new \InvalidArgumentException('Rodada inválida.');
+        $pdo=Database::getConnection();
+        $roundStmt=$pdo->prepare('SELECT id FROM rounds WHERE id=? LIMIT 1');
+        $roundStmt->execute([$roundId]);
+        if (!$roundStmt->fetchColumn()) throw new \RuntimeException('Rodada não encontrada.');
+        $event=$this->activeEvent($pdo);
+        if (!$event) throw new \RuntimeException('Nenhum evento ativo.');
+        $draw=GameEngineService::getOrCreateActiveDraw((int)$event['id'],$roundId);
+        return [(int)$draw['id'],(int)$event['id']];
+    }
+
+    private function activeEvent(PDO $pdo): ?array
+    {
+        $stmt=$pdo->query("SELECT * FROM events WHERE status='ACTIVE' ORDER BY id DESC LIMIT 1");
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    private function findRound(PDO $pdo, int $roundId): ?array
+    {
+        if ($roundId>0) {
+            $stmt=$pdo->prepare("SELECT r.*,d.status AS day_status,d.operation_date FROM rounds r JOIN operation_days d ON d.id=r.operation_day_id WHERE r.id=? LIMIT 1");
+            $stmt->execute([$roundId]);
+            $row=$stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) return $row;
+        }
+        $stmt=$pdo->query("SELECT r.*,d.status AS day_status,d.operation_date FROM rounds r JOIN operation_days d ON d.id=r.operation_day_id ORDER BY CASE WHEN d.status='OPEN' AND r.status IN ('IN_PROGRESS','CHECKING','PAUSED','OPEN') THEN 0 ELSE 1 END,d.operation_date DESC,r.round_number DESC LIMIT 1");
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    private static function jsonResponse(array $data, int $statusCode=200): never
     {
         http_response_code($statusCode);
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        header('Cache-Control: no-store');
+        echo json_encode($data,JSON_UNESCAPED_UNICODE);
         exit;
     }
 }

@@ -2,376 +2,260 @@
 
 namespace App\Services;
 
+use App\Core\Auth;
 use App\Core\Database;
+use Database\Migrations;
 use PDO;
 
 class BackupService
 {
+    private const AUTO_INTERVAL = 900; // 15 min
+    private const AUTO_RETENTION = 672; // 7 dias a cada 15 min
+
     private static array $tables = [
-        'users',
-        'sellers',
-        'pricing_rules',
-        'operation_days',
-        'rounds',
-        'sales',
-        'cash_movements',
-        'cash_closings',
-        'settings',
-        'card_colors',
-        'audit_logs'
+        'users','sellers','pricing_rules','operation_days','rounds','sales','cash_movements','cash_closings','settings','card_colors','audit_logs',
+        'events','event_batches','prizes','buyers','orders','order_items','payments','tickets','ticket_numbers','ticket_prints','ticket_validations',
+        'ticket_access_logs','game_rules','draws','draw_stones','ticket_game_state','ticket_scores','winner_claims','migration_history',
+        // legado preservado durante a transição
+        'called_numbers','winner_events',
     ];
 
     public static function autoBackupIfNeeded(): bool
     {
-        $backupDir = __DIR__ . '/../../storage/backups';
-        if (!is_dir($backupDir)) {
-            mkdir($backupDir, 0755, true);
-        }
-
-        $markerFile = $backupDir . '/.last_auto_backup';
-        $now = time();
-        $interval = 300; // 5 minutos
-
-        if (file_exists($markerFile)) {
-            $lastBackupTime = (int)@file_get_contents($markerFile);
-            if (($now - $lastBackupTime) < $interval) {
-                return false;
-            }
-        }
+        $dir=self::backupDir();
+        $marker=$dir.'/.last_auto_backup';
+        $now=time();
+        $last=is_file($marker)?(int)@file_get_contents($marker):0;
+        if ($last>0 && ($now-$last)<self::AUTO_INTERVAL) return false;
 
         try {
-            $data = self::createBackupData();
-            $json = json_encode($data, JSON_UNESCAPED_UNICODE);
-            $filename = 'auto_backup_' . date('Y-m-d_His') . '.json';
-            file_put_contents("{$backupDir}/{$filename}", $json);
-            file_put_contents($markerFile, (string)$now);
-
-            // Mantém os últimos 60 arquivos de backup automático (~5 horas de histórico recente a cada 5 min)
-            $files = glob("{$backupDir}/auto_backup_*.json");
-            if ($files && count($files) > 60) {
-                usort($files, fn($a, $b) => filemtime($a) <=> filemtime($b));
-                $toDelete = array_slice($files, 0, count($files) - 60);
-                foreach ($toDelete as $f) {
-                    @unlink($f);
-                }
-            }
-
+            self::writeSnapshot('auto_backup_'.date('Y-m-d_His').'.json');
+            file_put_contents($marker,(string)$now,LOCK_EX);
+            self::pruneAutomaticBackups();
             return true;
         } catch (\Throwable $e) {
-            error_log('Erro no backup automático: ' . $e->getMessage());
+            error_log('[Backup auto] '.$e->getMessage());
             return false;
         }
     }
 
     public static function createBackupData(): array
     {
-        $pdo = Database::getConnection();
-        $data = [
-            'app' => 'Show de Prêmios',
-            'schema_version' => '1.0',
-            'exported_at' => date('c'),
-            'tables' => [],
-        ];
-
-        foreach (self::$tables as $table) {
-            $stmt = $pdo->query("SELECT * FROM {$table}");
-            $data['tables'][$table] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $pdo=Database::getConnection();
+        $tables=[];
+        foreach(self::$tables as $table) {
+            if (!self::tableExists($pdo,$table)) continue;
+            $stmt=$pdo->query("SELECT * FROM {$table}");
+            $tables[$table]=$stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        return $data;
+        return [
+            'app'=>'Show de Prêmios',
+            'schema_version'=>Migrations::VERSION,
+            'database_driver'=>Database::getDriver(),
+            'exported_at'=>date('c'),
+            'tables'=>$tables,
+        ];
     }
 
     public static function exportBackupFile(): void
     {
-        $data = self::createBackupData();
-        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        $filename = 'backup_showdepremios_' . date('Y-m-d_His') . '.json';
-
-        // Also save to storage
-        $backupDir = __DIR__ . '/../../storage/backups';
-        if (!is_dir($backupDir)) {
-            mkdir($backupDir, 0755, true);
-        }
-        file_put_contents("{$backupDir}/{$filename}", $json);
-
+        $data=self::createBackupData();
+        $json=json_encode($data,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_SUBSTITUTE);
+        if ($json===false) throw new \RuntimeException('Falha ao serializar backup.');
+        $filename='backup_showdepremios_'.date('Y-m-d_His').'.json';
+        file_put_contents(self::backupDir().'/'.$filename,$json,LOCK_EX);
         header('Content-Type: application/json; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Disposition: attachment; filename="'.$filename.'"');
+        header('Cache-Control: no-store');
         echo $json;
         exit;
     }
 
     public static function restoreFromJson(string $jsonString): bool
     {
-        $backupData = json_decode($jsonString, true);
-        if (!$backupData || empty($backupData['tables'])) {
-            throw new \Exception("Arquivo de backup inválido ou formato corrompido.");
+        if (!Auth::isMaster()) throw new \RuntimeException('Restauração permitida apenas ao Administrador Master.');
+        if (strlen($jsonString)>50*1024*1024) throw new \RuntimeException('Arquivo de backup excede 50 MB.');
+
+        $backup=json_decode($jsonString,true,512,JSON_THROW_ON_ERROR);
+        if (($backup['app'] ?? null)!=='Show de Prêmios' || !is_array($backup['tables'] ?? null)) {
+            throw new \RuntimeException('Arquivo de backup inválido para o Show de Prêmios.');
         }
 
-        $pdo = Database::getConnection();
+        $pdo=Database::getConnection();
+        $driver=Database::getDriver();
+        self::writeSnapshot('pre_restore_'.date('Y-m-d_His').'.json');
 
-        // 1. Generate automatic pre-restore snapshot
-        $preBackup = self::createBackupData();
-        $backupDir = __DIR__ . '/../../storage/backups';
-        if (!is_dir($backupDir)) {
-            mkdir($backupDir, 0755, true);
-        }
-        file_put_contents("{$backupDir}/pre_restore_" . date('Y-m-d_His') . '.json', json_encode($preBackup));
-
-        // 2. Execute restore in transaction
+        self::setForeignKeys($pdo,$driver,false);
         $pdo->beginTransaction();
-
         try {
-            // Disable foreign key checks for clean restore
-            $driver = Database::getDriver();
-            if ($driver === 'sqlite') {
-                $pdo->exec("PRAGMA foreign_keys = OFF;");
-            } elseif ($driver === 'mysql') {
-                $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
-            }
-
-            // Clean tables in reverse dependency order
-            $reverseTables = array_reverse(self::$tables);
-            foreach ($reverseTables as $table) {
+            $existing=array_values(array_filter(self::$tables,fn(string $t):bool=>self::tableExists($pdo,$t)));
+            foreach(array_reverse($existing) as $table) {
+                if (!array_key_exists($table,$backup['tables'])) continue;
                 $pdo->exec("DELETE FROM {$table}");
             }
 
-            // Insert records
-            foreach (self::$tables as $table) {
-                if (empty($backupData['tables'][$table])) {
-                    continue;
+            foreach($existing as $table) {
+                $rows=$backup['tables'][$table] ?? null;
+                if (!is_array($rows) || $rows===[]) continue;
+                $columns=array_keys($rows[0]);
+                if (!$columns) continue;
+                foreach($columns as $column) {
+                    if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/',$column)) throw new \RuntimeException('Coluna inválida no backup.');
                 }
-
-                $rows = $backupData['tables'][$table];
-                $firstRow = $rows[0];
-                $columns = array_keys($firstRow);
-                $colList = implode(', ', $columns);
-                $placeholders = implode(', ', array_fill(0, count($columns), '?'));
-
-                $stmt = $pdo->prepare("INSERT INTO {$table} ({$colList}) VALUES ({$placeholders})");
-
-                foreach ($rows as $row) {
-                    $stmt->execute(array_values($row));
+                $columnSql=implode(',',array_map(fn(string $c):string=>'"'.str_replace('"','""',$c).'"',$columns));
+                if ($driver==='mysql') $columnSql=implode(',',array_map(fn(string $c):string=>'`'.str_replace('`','``',$c).'`',$columns));
+                $placeholders=implode(',',array_fill(0,count($columns),'?'));
+                $stmt=$pdo->prepare("INSERT INTO {$table} ({$columnSql}) VALUES ({$placeholders})");
+                foreach($rows as $row) {
+                    $values=[];
+                    foreach($columns as $column) $values[]=$row[$column] ?? null;
+                    $stmt->execute($values);
                 }
-            }
-
-            if ($driver === 'sqlite') {
-                $pdo->exec("PRAGMA foreign_keys = ON;");
-            } elseif ($driver === 'mysql') {
-                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
             }
 
             $pdo->commit();
-
-            AuditService::log('BACKUP_RESTORE', 'system', null, null, ['status' => 'success']);
+            self::setForeignKeys($pdo,$driver,true);
+            AuditService::log('BACKUP_RESTORE','system',null,null,['status'=>'success','schema_version'=>$backup['schema_version'] ?? null]);
             return true;
         } catch (\Throwable $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            self::setForeignKeys($pdo,$driver,true);
             throw $e;
         }
     }
 
-    /**
-     * Limpa o banco de dados e a auditoria, mantendo estritamente:
-     * - users (Usuários e Operadores)
-     * - sellers (Vendedores e Vendedoras)
-     * - pricing_rules (Regras de preços)
-     * - card_colors (Cores de cartelas)
-     * - settings (Configurações gerais)
-     */
     public static function cleanDatabaseKeepUsersAndSellers(): array
     {
-        $pdo = Database::getConnection();
-        $driver = Database::getDriver();
+        if (!Auth::isMaster()) throw new \RuntimeException('Limpeza permitida apenas ao Administrador Master.');
+        self::writeSnapshot('pre_clean_'.date('Y-m-d_His').'.json');
+        $pdo=Database::getConnection();
+        $driver=Database::getDriver();
+        $tables=['winner_claims','winner_events','ticket_scores','ticket_game_state','draw_stones','called_numbers','draws','ticket_access_logs','ticket_validations','ticket_prints','ticket_numbers','order_items','payments','tickets','orders','buyers','sales','cash_movements','cash_closings','rounds','operation_days','audit_logs'];
+        return self::cleanTables($pdo,$driver,$tables,'SYSTEM_RESET');
+    }
 
-        // 1. Gera backup preventivo de segurança antes de qualquer exclusão
-        try {
-            self::autoBackupIfNeeded();
-        } catch (\Throwable $e) {}
-
-        if ($driver === 'sqlite') {
-            $pdo->exec("PRAGMA foreign_keys = OFF;");
-        } elseif ($driver === 'mysql') {
-            $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
-        }
-
+    public static function cleanDatabaseSelective(array $selected): array
+    {
+        if (!Auth::isMaster()) throw new \RuntimeException('Limpeza seletiva permitida apenas ao Administrador Master.');
+        self::writeSnapshot('pre_selective_clean_'.date('Y-m-d_His').'.json');
+        $pdo=Database::getConnection();
+        $driver=Database::getDriver();
+        $cleared=[];
+        self::setForeignKeys($pdo,$driver,false);
         $pdo->beginTransaction();
-
         try {
-            $tablesToClean = [
-                'sales',
-                'cash_movements',
-                'cash_closings',
-                'rounds',
-                'operation_days',
-                'audit_logs',
+            $groups=[
+                'sales'=>['sales'],
+                'rounds'=>['winner_claims','winner_events','ticket_scores','ticket_game_state','draw_stones','called_numbers','draws','rounds'],
+                'cash'=>['cash_movements','cash_closings'],
+                'operation_days'=>['operation_days'],
+                'digital_orders'=>['ticket_access_logs','ticket_validations','ticket_prints','ticket_numbers','order_items','payments','tickets','orders','buyers'],
+                'audit_logs'=>['audit_logs'],
             ];
-
-            $cleared = [];
-            foreach ($tablesToClean as $table) {
-                try {
-                    $count = (int)$pdo->query("SELECT COUNT(*) FROM {$table}")->fetchColumn();
+            foreach($groups as $key=>$tables) {
+                if (empty($selected[$key])) continue;
+                foreach($tables as $table) {
+                    if (!self::tableExists($pdo,$table)) continue;
+                    $count=(int)$pdo->query("SELECT COUNT(*) FROM {$table}")->fetchColumn();
                     $pdo->exec("DELETE FROM {$table}");
-                    $cleared[$table] = $count;
-                } catch (\Throwable $e) {
-                    $cleared[$table] = 0;
+                    $cleared[$table]=$count;
                 }
             }
 
-            // Reseta contadores AUTOINCREMENT no SQLite
-            if ($driver === 'sqlite') {
-                try {
-                    $pdo->exec("DELETE FROM sqlite_sequence WHERE name IN ('sales', 'cash_movements', 'cash_closings', 'rounds', 'operation_days', 'audit_logs')");
-                } catch (\Throwable $e) {}
-                $pdo->exec("PRAGMA foreign_keys = ON;");
-            } elseif ($driver === 'mysql') {
-                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
+            if (!empty($selected['pricing_history']) && self::tableExists($pdo,'pricing_rules')) {
+                $latest=(int)($pdo->query("SELECT id FROM pricing_rules ORDER BY CASE WHEN effective_to IS NULL THEN 0 ELSE 1 END,effective_from DESC,id DESC LIMIT 1")->fetchColumn() ?: 0);
+                if ($latest>0) {
+                    $count=(int)$pdo->query("SELECT COUNT(*) FROM pricing_rules WHERE id<>{$latest}")->fetchColumn();
+                    $pdo->exec("DELETE FROM pricing_rules WHERE id<>{$latest}");
+                    $pdo->exec("UPDATE pricing_rules SET effective_to=NULL,active=1 WHERE id={$latest}");
+                    $cleared['pricing_rules_history']=$count;
+                }
+            }
+            if (!empty($selected['sellers']) && self::tableExists($pdo,'sellers')) {
+                $count=(int)$pdo->query('SELECT COUNT(*) FROM sellers')->fetchColumn();
+                $pdo->exec('DELETE FROM sellers');
+                $cleared['sellers']=$count;
+            }
+            if (!empty($selected['operators']) && self::tableExists($pdo,'users')) {
+                $currentId=(int)Auth::id();
+                $stmt=$pdo->prepare("SELECT COUNT(*) FROM users WHERE id<>? AND UPPER(role)<>'MASTER'");
+                $stmt->execute([$currentId]);
+                $count=(int)$stmt->fetchColumn();
+                $stmt=$pdo->prepare("DELETE FROM users WHERE id<>? AND UPPER(role)<>'MASTER'");
+                $stmt->execute([$currentId]);
+                $cleared['operators']=$count;
             }
 
             $pdo->commit();
-
-            // 2. Insere log inaugural de auditoria no Horário Oficial de Brasília
-            AuditService::log('SYSTEM_RESET', 'system', null, null, [
-                'description' => 'Limpeza de banco de dados e auditoria realizada com sucesso. Usuários e vendedores mantidos.',
-                'cleared_tables' => $cleared,
-                'timezone' => 'Horário Oficial de Brasília (America/Sao_Paulo)',
-            ]);
-
-            return [
-                'success' => true,
-                'cleared' => $cleared,
-            ];
+            self::setForeignKeys($pdo,$driver,true);
+            AuditService::log('SYSTEM_SELECTIVE_RESET','system',null,null,['cleared_items'=>$cleared,'timezone'=>'America/Sao_Paulo']);
+            return ['success'=>true,'cleared'=>$cleared];
         } catch (\Throwable $e) {
-            $pdo->rollBack();
-            if ($driver === 'sqlite') {
-                $pdo->exec("PRAGMA foreign_keys = ON;");
-            } elseif ($driver === 'mysql') {
-                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
-            }
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            self::setForeignKeys($pdo,$driver,true);
             throw $e;
         }
     }
 
-    /**
-     * Limpeza seletiva de tabelas e dados conforme seleção do Administrador Master
-     */
-    public static function cleanDatabaseSelective(array $selected): array
+    private static function cleanTables(PDO $pdo,string $driver,array $tables,string $auditAction): array
     {
-        $pdo = Database::getConnection();
-        $driver = Database::getDriver();
-
-        // Gera backup preventivo de segurança antes de qualquer exclusão
-        try {
-            self::autoBackupIfNeeded();
-        } catch (\Throwable $e) {}
-
-        if ($driver === 'sqlite') {
-            $pdo->exec("PRAGMA foreign_keys = OFF;");
-        } elseif ($driver === 'mysql') {
-            $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
-        }
-
+        self::setForeignKeys($pdo,$driver,false);
         $pdo->beginTransaction();
-
+        $cleared=[];
         try {
-            $cleared = [];
-
-            // 1. Vendas
-            if (!empty($selected['sales'])) {
-                $cnt = (int)$pdo->query("SELECT COUNT(*) FROM sales")->fetchColumn();
-                $pdo->exec("DELETE FROM sales");
-                $cleared['sales'] = $cnt;
+            foreach($tables as $table) {
+                if (!self::tableExists($pdo,$table)) continue;
+                $count=(int)$pdo->query("SELECT COUNT(*) FROM {$table}")->fetchColumn();
+                $pdo->exec("DELETE FROM {$table}");
+                $cleared[$table]=$count;
             }
-
-            // 2. Rodadas e sorteios
-            if (!empty($selected['rounds'])) {
-                $cnt = (int)$pdo->query("SELECT COUNT(*) FROM rounds")->fetchColumn();
-                $pdo->exec("DELETE FROM rounds");
-                $cleared['rounds'] = $cnt;
-            }
-
-            // 3. Movimentações de Caixa e Fechamentos
-            if (!empty($selected['cash'])) {
-                $cnt1 = (int)$pdo->query("SELECT COUNT(*) FROM cash_movements")->fetchColumn();
-                $cnt2 = (int)$pdo->query("SELECT COUNT(*) FROM cash_closings")->fetchColumn();
-                $pdo->exec("DELETE FROM cash_movements");
-                $pdo->exec("DELETE FROM cash_closings");
-                $cleared['cash_movements'] = $cnt1;
-                $cleared['cash_closings'] = $cnt2;
-            }
-
-            // 4. Dias de operação
-            if (!empty($selected['operation_days'])) {
-                $cnt = (int)$pdo->query("SELECT COUNT(*) FROM operation_days")->fetchColumn();
-                $pdo->exec("DELETE FROM operation_days");
-                $cleared['operation_days'] = $cnt;
-            }
-
-            // 5. Histórico antigo de regras de preços (preserva a regra mais recente como vigente)
-            if (!empty($selected['pricing_history'])) {
-                $latestRuleId = (int)$pdo->query("SELECT id FROM pricing_rules ORDER BY CASE WHEN effective_to IS NULL THEN 0 ELSE 1 END, effective_from DESC LIMIT 1")->fetchColumn();
-                if ($latestRuleId > 0) {
-                    $cnt = (int)$pdo->query("SELECT COUNT(*) FROM pricing_rules WHERE id != {$latestRuleId}")->fetchColumn();
-                    $pdo->exec("DELETE FROM pricing_rules WHERE id != {$latestRuleId}");
-                    $pdo->exec("UPDATE pricing_rules SET effective_to = NULL, active = 1 WHERE id = {$latestRuleId}");
-                    $cleared['pricing_rules_history'] = $cnt;
-                }
-            }
-
-            // 6. Vendedores
-            if (!empty($selected['sellers'])) {
-                $cnt = (int)$pdo->query("SELECT COUNT(*) FROM sellers")->fetchColumn();
-                $pdo->exec("DELETE FROM sellers");
-                $cleared['sellers'] = $cnt;
-            }
-
-            // 7. Operadores (exceto o próprio master logado e tcardozo)
-            if (!empty($selected['operators'])) {
-                $currentId = (int)\App\Core\Auth::id();
-                $cnt = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE id != {$currentId} AND LOWER(login) != 'tcardozo'")->fetchColumn();
-                $pdo->exec("DELETE FROM users WHERE id != {$currentId} AND LOWER(login) != 'tcardozo'");
-                $cleared['operators'] = $cnt;
-            }
-
-            // 8. Logs de auditoria
-            if (!empty($selected['audit_logs'])) {
-                $cnt = (int)$pdo->query("SELECT COUNT(*) FROM audit_logs")->fetchColumn();
-                $pdo->exec("DELETE FROM audit_logs");
-                $cleared['audit_logs'] = $cnt;
-            }
-
-            // Reseta contadores AUTOINCREMENT no SQLite para as tabelas limpas
-            if ($driver === 'sqlite') {
-                foreach (array_keys($cleared) as $tbl) {
-                    try {
-                        $pdo->exec("DELETE FROM sqlite_sequence WHERE name = '{$tbl}'");
-                    } catch (\Throwable $e) {}
-                }
-                $pdo->exec("PRAGMA foreign_keys = ON;");
-            } elseif ($driver === 'mysql') {
-                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
-            }
-
             $pdo->commit();
-
-            // Log de auditoria da limpeza seletiva
-            AuditService::log('SYSTEM_SELECTIVE_RESET', 'system', null, null, [
-                'description' => 'Limpeza seletiva executada pelo Administrador Master.',
-                'cleared_items' => $cleared,
-                'timezone' => 'Horário Oficial de Brasília (America/Sao_Paulo)',
-            ]);
-
-            return [
-                'success' => true,
-                'cleared' => $cleared,
-            ];
+            self::setForeignKeys($pdo,$driver,true);
+            AuditService::log($auditAction,'system',null,null,['cleared_tables'=>$cleared,'timezone'=>'America/Sao_Paulo']);
+            return ['success'=>true,'cleared'=>$cleared];
         } catch (\Throwable $e) {
-            $pdo->rollBack();
-            if ($driver === 'sqlite') {
-                $pdo->exec("PRAGMA foreign_keys = ON;");
-            } elseif ($driver === 'mysql') {
-                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
-            }
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            self::setForeignKeys($pdo,$driver,true);
             throw $e;
         }
+    }
+
+    private static function writeSnapshot(string $filename): string
+    {
+        $json=json_encode(self::createBackupData(),JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_SUBSTITUTE);
+        if ($json===false) throw new \RuntimeException('Falha ao serializar backup.');
+        $path=self::backupDir().'/'.$filename;
+        if (file_put_contents($path,$json,LOCK_EX)===false) throw new \RuntimeException('Falha ao gravar backup.');
+        @chmod($path,0640);
+        return $path;
+    }
+
+    private static function backupDir(): string
+    {
+        $dir=__DIR__.'/../../storage/backups';
+        if (!is_dir($dir) && !mkdir($dir,0750,true) && !is_dir($dir)) throw new \RuntimeException('Não foi possível criar diretório de backup.');
+        return $dir;
+    }
+
+    private static function pruneAutomaticBackups(): void
+    {
+        $files=glob(self::backupDir().'/auto_backup_*.json') ?: [];
+        if (count($files)<=self::AUTO_RETENTION) return;
+        usort($files,fn(string $a,string $b):int=>filemtime($a)<=>filemtime($b));
+        foreach(array_slice($files,0,count($files)-self::AUTO_RETENTION) as $file) @unlink($file);
+    }
+
+    private static function tableExists(PDO $pdo,string $table): bool
+    {
+        try { $pdo->query("SELECT 1 FROM {$table} LIMIT 1"); return true; } catch (\Throwable $e) { return false; }
+    }
+
+    private static function setForeignKeys(PDO $pdo,string $driver,bool $enabled): void
+    {
+        try {
+            if ($driver==='sqlite') $pdo->exec('PRAGMA foreign_keys = '.($enabled?'ON':'OFF'));
+            elseif ($driver==='mysql') $pdo->exec('SET FOREIGN_KEY_CHECKS = '.($enabled?'1':'0'));
+        } catch (\Throwable $e) {}
     }
 }
