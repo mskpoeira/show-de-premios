@@ -177,14 +177,7 @@ jobs:
 
             TMP_FILE="${CADDY_FILE}.tmp"
             sed '/# BEGIN SHOWDEPREMIOS HOMOLOGACAO/,/# END SHOWDEPREMIOS HOMOLOGACAO/d' "$CADDY_FILE" > "$TMP_FILE"
-            cat >> "$TMP_FILE" <<EOF
-
-# BEGIN SHOWDEPREMIOS HOMOLOGACAO
-$HOMOLOG_HOST {
-    reverse_proxy showdepremios-homologacao:80
-}
-# END SHOWDEPREMIOS HOMOLOGACAO
-EOF
+            printf '\n# BEGIN SHOWDEPREMIOS HOMOLOGACAO\n%s {\n    reverse_proxy showdepremios-homologacao:80\n}\n# END SHOWDEPREMIOS HOMOLOGACAO\n' "$HOMOLOG_HOST" >> "$TMP_FILE"
             mv "$TMP_FILE" "$CADDY_FILE"
 
             if [ -z "$CADDY_SOURCE" ]; then
