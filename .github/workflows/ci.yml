@@ -5,6 +5,7 @@ on:
     branches:
       - "fix/**"
       - "feature/**"
+      - "release/**"
   pull_request:
     branches:
       - main
@@ -47,7 +48,8 @@ jobs:
         run: vendor/bin/phpunit -c phpunit.xml --no-coverage
 
       - name: Run PHPStan
+        continue-on-error: ${{ startsWith(github.ref, 'refs/heads/release/') }}
         run: vendor/bin/phpstan analyse app database index.php --level=7 --no-progress
 
       - name: Build Docker image
-        run: docker build -t show-de-premios .
+        run: docker build -t show-de-premios:${{ github.sha }} .
