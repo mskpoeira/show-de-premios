@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches:
+      - main
       - "fix/**"
       - "feature/**"
       - "release/**"
@@ -15,6 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate application version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION_VALUE="$(tr -d '\r\n ' < VERSION)"
+          if ! printf '%s' "$VERSION_VALUE" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$'; then
+            echo "VERSION inválida: $VERSION_VALUE"
+            exit 1
+          fi
+          grep -q "VERSION" app/Views/layouts/main.php
+          grep -q 'appVersion' app/Views/layouts/main.php
+          echo "Versão Web validada: $VERSION_VALUE"
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
