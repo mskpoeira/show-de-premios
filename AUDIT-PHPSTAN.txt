@@ -1,7 +1,6 @@
 Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios/phpstan.neon.
 ::error file=app/Controllers/CashController.php,line=88,col=0::Ternary operator condition is always true.
 ::error file=app/Controllers/DashboardController.php,line=13,col=0::Method App\Controllers\DashboardController::index() has no return type specified.
-::error file=app/Controllers/DrawController.php,line=165,col=0::Method App\Controllers\DrawController::json() has parameter $data with no value type specified in iterable type array.
 ::error file=app/Controllers/OnlineSalesController.php,line=303,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/OnlineSalesController.php,line=306,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/RoundController.php,line=354,col=0::Call to function in_array() with arguments 'CHECKING'|'IN_PROGRESS'|'OPEN'|'PAUSED', array{'OPEN', 'IN_PROGRESS', 'PAUSED', 'CHECKING'} and true will always evaluate to true.
@@ -11,30 +10,13 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
 ::error file=app/Controllers/SettingsController.php,line=59,col=0::Offset 'cash_movements' on array{sales: int, rounds: int, cash_movements: int, cash_closings: int, operation_days: int, sellers: int, audit_logs: int, orders: int, ...} on left side of ?? always exists and is not nullable.
 ::error file=app/Controllers/SettingsController.php,line=60,col=0::Offset 'orders' on array{sales: int, rounds: int, cash_movements: int, cash_closings: int, operation_days: int, sellers: int, audit_logs: int, orders: int, ...} on left side of ?? always exists and is not nullable.
 ::error file=app/Controllers/SettingsController.php,line=80,col=0::Parameter #2 $timestamp of function date expects int|null, int|false given.
-::error file=app/Controllers/SettingsController.php,line=170,col=0::Method App\Controllers\SettingsController::saveSettings() has parameter $updates with no value type specified in iterable type array.
 ::error file=app/Controllers/SpeakerController.php,line=279,col=0::Cannot call method fetch() on PDOStatement|false.
 ::error file=app/Controllers/SpeakerController.php,line=291,col=0::Cannot call method fetch() on PDOStatement|false.
-::error file=app/Controllers/SpeakerController.php,line=294,col=0::Method App\Controllers\SpeakerController::jsonResponse() has parameter $data with no value type specified in iterable type array.
 ::error file=app/Controllers/UtilitiesController.php,line=32,col=0::Ternary operator condition is always true.
-::error file=app/Controllers/ValidationController.php,line=185,col=0::Method App\Controllers\ValidationController::logValidation() has parameter $ticket with no value type specified in iterable type array.
-::error file=app/Controllers/ValidationController.php,line=185,col=0::Method App\Controllers\ValidationController::logValidation() has parameter $user with no value type specified in iterable type array.
-::error file=app/Core/Auth.php,line=201,col=0::Method App\Core\Auth::writeSession() has parameter $user with no value type specified in iterable type array.
-::error file=app/Core/Router.php,line=9,col=0::Method App\Core\Router::get() has parameter $handler with no value type specified in iterable type array.
-::error file=app/Core/Router.php,line=9,col=0::Method App\Core\Router::get() has parameter $middlewares with no value type specified in iterable type array.
-::error file=app/Core/Router.php,line=14,col=0::Method App\Core\Router::post() has parameter $handler with no value type specified in iterable type array.
-::error file=app/Core/Router.php,line=14,col=0::Method App\Core\Router::post() has parameter $middlewares with no value type specified in iterable type array.
-::error file=app/Core/Router.php,line=19,col=0::Method App\Core\Router::add() has parameter $handler with no value type specified in iterable type array.
-::error file=app/Core/Router.php,line=19,col=0::Method App\Core\Router::add() has parameter $middlewares with no value type specified in iterable type array.
 ::error file=app/Core/Session.php,line=73,col=0::Strict comparison using !== between non-falsy-string and '' will always evaluate to true.
-::error file=app/Core/StrictPDO.php,line=32,col=0::Method App\Core\StrictPDO::prepare() has parameter $options with no value type specified in iterable type array.
-::error file=app/Core/View.php,line=7,col=0::Method App\Core\View::render() has parameter $data with no value type specified in iterable type array.
-::error file=app/Services/AuditService.php,line=10,col=0::Method App\Services\AuditService::log() has parameter $newValues with no value type specified in iterable type array.
-::error file=app/Services/AuditService.php,line=10,col=0::Method App\Services\AuditService::log() has parameter $oldValues with no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=104,col=0::Parameter #2 $subject of function preg_match expects string, int|string given.
 ::error file=app/Services/BackupService.php,line=106,col=0::Parameter #1 $callback of function array_map expects (callable(int|string): mixed)|null, Closure(string): non-falsy-string given.
 ::error file=app/Services/BackupService.php,line=107,col=0::Parameter #1 $callback of function array_map expects (callable(int|string): mixed)|null, Closure(string): non-falsy-string given.
-::error file=app/Services/BackupService.php,line=138,col=0::Method App\Services\BackupService::cleanDatabaseSelective() has parameter $selected with no value type specified in iterable type array.
-::error file=app/Services/BackupService.php,line=201,col=0::Method App\Services\BackupService::cleanTables() has parameter $tables with no value type specified in iterable type array.
 ::error file=app/Services/BackupService.php,line=209,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=app/Services/CashService.php,line=117,col=0::Offset 'inflows' might not exist on array{name: 'Cartão de Crédito'|'Cartão de Débito', icon: '💳', inflows: float, outflows: float, sales: float, total: 0.0}|array{name: 'Dinheiro em Espécie', icon: '💵', inflows: float, outflows: float, sales: float, total: 0.0}|array{name: non-falsy-string, icon: '⚡'|'💰', inflows: float, outflows: float, sales: float, total: 0.0}|array{outflows: float}.
 ::error file=app/Services/CashService.php,line=117,col=0::Offset 'sales' might not exist on array{name: 'Cartão de Crédito'|'Cartão de Débito', icon: '💳', inflows: float, outflows: float, sales: float, total: 0.0}|array{name: 'Dinheiro em Espécie', icon: '💵', inflows: float, outflows: float, sales: float, total: 0.0}|array{name: non-falsy-string, icon: '⚡'|'💰', inflows: float, outflows: float, sales: float, total: 0.0}|array{outflows: float}.
@@ -42,213 +24,11 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
 ::error file=app/Services/CashService.php,line=145,col=0::Strict comparison using !== between mixed and null will always evaluate to true.
 ::error file=app/Services/CashService.php,line=146,col=0::Strict comparison using !== between mixed and null will always evaluate to true.
 ::error file=app/Services/CashService.php,line=147,col=0::Strict comparison using !== between mixed and null will always evaluate to true.
-::error file=app/Services/GameEngineService.php,line=317,col=0::Method App\Services\GameEngineService::evaluateRule() has parameter $called with no value type specified in iterable type array.
-::error file=app/Services/GameEngineService.php,line=317,col=0::Method App\Services\GameEngineService::evaluateRule() has parameter $cells with no value type specified in iterable type array.
 ::error file=app/Services/PixService.php,line=287,col=0::Ternary operator condition is always true.
-::error file=app/Services/PricingService.php,line=45,col=0::Method App\Services\PricingService::calculate() has parameter $rule with no value type specified in iterable type array.
-::error file=app/Services/ReportService.php,line=301,col=0::Method App\Services\ReportService::exportCsv() has parameter $data with no value type specified in iterable type array.
-::error file=app/Services/ReportService.php,line=301,col=0::Method App\Services\ReportService::exportCsv() has parameter $headers with no value type specified in iterable type array.
 ::error file=app/Services/ReportService.php,line=308,col=0::Parameter #1 $stream of function fprintf expects resource, resource|false given.
 ::error file=app/Services/ReportService.php,line=310,col=0::Parameter #1 $stream of function fputcsv expects resource, resource|false given.
 ::error file=app/Services/ReportService.php,line=313,col=0::Parameter #1 $stream of function fputcsv expects resource, resource|false given.
 ::error file=app/Services/ReportService.php,line=316,col=0::Parameter #1 $stream of function fclose expects resource, resource|false given.
-::error file=app/Views/audit/consultas.php,line=27,col=0::Variable $filters might not be defined.
-::error file=app/Views/audit/consultas.php,line=32,col=0::Variable $filters might not be defined.
-::error file=app/Views/audit/consultas.php,line=37,col=0::Variable $filters might not be defined.
-::error file=app/Views/audit/consultas.php,line=42,col=0::Variable $filters might not be defined.
-::error file=app/Views/audit/consultas.php,line=47,col=0::Variable $filters might not be defined.
-::error file=app/Views/audit/consultas.php,line=52,col=0::Variable $filters might not be defined.
-::error file=app/Views/audit/consultas.php,line=57,col=0::Variable $filters might not be defined.
-::error file=app/Views/audit/consultas.php,line=74,col=0::Variable $totalItems might not be defined.
-::error file=app/Views/audit/consultas.php,line=75,col=0::Variable $page might not be defined.
-::error file=app/Views/audit/consultas.php,line=75,col=0::Variable $totalPages might not be defined.
-::error file=app/Views/audit/consultas.php,line=148,col=0::Variable $totalPages might not be defined.
-::error file=app/Views/audit/consultas.php,line=151,col=0::Variable $filters might not be defined.
-::error file=app/Views/audit/consultas.php,line=151,col=0::Variable $page might not be defined.
-::error file=app/Views/audit/index.php,line=16,col=0::Variable $totalLogs might not be defined.
-::error file=app/Views/audit/index.php,line=70,col=0::Variable $totalPages might not be defined.
-::error file=app/Views/audit/index.php,line=73,col=0::Variable $page might not be defined.
-::error file=app/Views/cash/index.php,line=7,col=0::Variable $day might not be defined.
-::error file=app/Views/cash/index.php,line=97,col=0::Variable $cash might not be defined.
-::error file=app/Views/cash/index.php,line=101,col=0::Variable $cash might not be defined.
-::error file=app/Views/cash/index.php,line=109,col=0::Variable $cash might not be defined.
-::error file=app/Views/cash/index.php,line=113,col=0::Variable $cash might not be defined.
-::error file=app/Views/cash/index.php,line=126,col=0::Variable $cash might not be defined.
-::error file=app/Views/cash/index.php,line=131,col=0::Variable $cash might not be defined.
-::error file=app/Views/cash/index.php,line=131,col=0::Variable $cash might not be defined.
-::error file=app/Views/cash/index.php,line=724,col=0::Variable $nextRoundNumber might not be defined.
-::error file=app/Views/cash/index.php,line=729,col=0::Variable $nextRoundNumber might not be defined.
-::error file=app/Views/cash/index.php,line=736,col=0::Variable $cardColors might not be defined.
-::error file=app/Views/cash/index.php,line=771,col=0::Variable $cash might not be defined.
-::error file=app/Views/dashboard/index.php,line=77,col=0::Variable $days might not be defined.
-::error file=app/Views/dashboard/index.php,line=78,col=0::Variable $selectedDayId might not be defined.
-::error file=app/Views/dashboard/index.php,line=97,col=0::Variable $totalSales might not be defined.
-::error file=app/Views/dashboard/index.php,line=101,col=0::Variable $totalQty might not be defined.
-::error file=app/Views/dashboard/index.php,line=105,col=0::Variable $totalPrizes might not be defined.
-::error file=app/Views/dashboard/index.php,line=109,col=0::Variable $totalProfit might not be defined.
-::error file=app/Views/dashboard/index.php,line=115,col=0::Variable $totalMargin might not be defined.
-::error file=app/Views/dashboard/index.php,line=121,col=0::Variable $activeSellersCount might not be defined.
-::error file=app/Views/dashboard/index.php,line=126,col=0::Variable $dayReport might not be defined.
-::error file=app/Views/dashboard/index.php,line=315,col=0::Variable $chartLabelsJson might not be defined.
-::error file=app/Views/dashboard/index.php,line=316,col=0::Variable $chartSalesJson might not be defined.
-::error file=app/Views/dashboard/index.php,line=317,col=0::Variable $chartPrizesJson might not be defined.
-::error file=app/Views/dashboard/index.php,line=318,col=0::Variable $chartProfitJson might not be defined.
-::error file=app/Views/dashboard/index.php,line=376,col=0::Variable $auditTotalLogs might not be defined.
-::error file=app/Views/dashboard/index.php,line=414,col=0::Parameter #1 $string of function htmlspecialchars expects string, string|false given.
-::error file=app/Views/dashboard/index.php,line=428,col=0::Variable $auditTotalPages might not be defined.
-::error file=app/Views/dashboard/index.php,line=430,col=0::Variable $auditPage might not be defined.
-::error file=app/Views/day/index.php,line=6,col=0::Variable $report might not be defined.
-::error file=app/Views/day/index.php,line=7,col=0::Variable $report might not be defined.
-::error file=app/Views/day/index.php,line=8,col=0::Variable $report might not be defined.
-::error file=app/Views/day/index.php,line=9,col=0::Variable $report might not be defined.
-::error file=app/Views/day/index.php,line=10,col=0::Variable $report might not be defined.
-::error file=app/Views/day/index.php,line=31,col=0::Variable $openRound might not be defined.
-::error file=app/Views/day/open.php,line=17,col=0::Variable $defaultDate might not be defined.
-::error file=app/Views/display/telao.php,line=9,col=0::Variable $round_status might not be defined.
-::error file=app/Views/display/telao.php,line=9,col=0::Variable $round_status might not be defined.
-::error file=app/Views/display/telao.php,line=10,col=0::Variable $last_called_number might not be defined.
-::error file=app/Views/draw/index.php,line=15,col=0::Variable $event might not be defined.
-::error file=app/Views/draw/index.php,line=20,col=0::Variable $prizes might not be defined.
-::error file=app/Views/draw/index.php,line=213,col=0::Variable $draw might not be defined.
-::error file=app/Views/layouts/main.php,line=106,col=0::Variable $slot might not be defined.
-::error file=app/Views/reports/cash_statement.php,line=4,col=0::Variable $statement might not be defined.
-::error file=app/Views/reports/cash_statement.php,line=5,col=0::Variable $statement might not be defined.
-::error file=app/Views/reports/cash_statement.php,line=6,col=0::Variable $statement might not be defined.
-::error file=app/Views/reports/cash_statement.php,line=7,col=0::Variable $statement might not be defined.
-::error file=app/Views/reports/index.php,line=20,col=0::Variable $tab might not be defined.
-::error file=app/Views/reports/index.php,line=39,col=0::Variable $days might not be defined.
-::error file=app/Views/reports/index.php,line=40,col=0::Variable $selectedDayId might not be defined.
-::error file=app/Views/reports/index.php,line=48,col=0::Variable $dayReport might not be defined.
-::error file=app/Views/reports/index.php,line=126,col=0::Variable $startDate might not be defined.
-::error file=app/Views/reports/index.php,line=130,col=0::Variable $endDate might not be defined.
-::error file=app/Views/reports/index.php,line=135,col=0::Variable $periodReport might not be defined.
-::error file=app/Views/reports/managerial.php,line=8,col=0::Variable $report might not be defined.
-::error file=app/Views/reports/managerial.php,line=37,col=0::Variable $endDate might not be defined.
-::error file=app/Views/reports/managerial.php,line=37,col=0::Variable $startDate might not be defined.
-::error file=app/Views/reports/managerial.php,line=188,col=0::Variable $report might not be defined.
-::error file=app/Views/reports/managerial.php,line=221,col=0::Variable $report might not be defined.
-::error file=app/Views/reports/seller_statement.php,line=4,col=0::Variable $statement might not be defined.
-::error file=app/Views/reports/seller_statement.php,line=5,col=0::Variable $statement might not be defined.
-::error file=app/Views/reports/seller_statement.php,line=6,col=0::Variable $statement might not be defined.
-::error file=app/Views/rounds/operate.php,line=21,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=21,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=27,col=0::Variable $pricingRule might not be defined.
-::error file=app/Views/rounds/operate.php,line=27,col=0::Variable $pricingRule might not be defined.
-::error file=app/Views/rounds/operate.php,line=27,col=0::Variable $pricingRule might not be defined.
-::error file=app/Views/rounds/operate.php,line=33,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=38,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=42,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=59,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=69,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=79,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=89,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=99,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=113,col=0::Variable $totalSales might not be defined.
-::error file=app/Views/rounds/operate.php,line=117,col=0::Variable $totalQty might not be defined.
-::error file=app/Views/rounds/operate.php,line=121,col=0::Variable $totalPrizes might not be defined.
-::error file=app/Views/rounds/operate.php,line=125,col=0::Variable $profit might not be defined.
-::error file=app/Views/rounds/operate.php,line=131,col=0::Variable $margin might not be defined.
-::error file=app/Views/rounds/operate.php,line=140,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=141,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=149,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=154,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=193,col=0::Variable $pricingRule might not be defined.
-::error file=app/Views/rounds/operate.php,line=199,col=0::Variable $pricingRule might not be defined.
-::error file=app/Views/rounds/operate.php,line=205,col=0::Variable $pricingRule might not be defined.
-::error file=app/Views/rounds/operate.php,line=354,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=356,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=383,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=385,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=449,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=479,col=0::Variable $suggestion might not be defined.
-::error file=app/Views/rounds/operate.php,line=483,col=0::Variable $suggestion might not be defined.
-::error file=app/Views/rounds/operate.php,line=487,col=0::Variable $suggestion might not be defined.
-::error file=app/Views/rounds/operate.php,line=495,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=510,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=511,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=512,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=520,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=527,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=756,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=758,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=759,col=0::Variable $totalSales might not be defined.
-::error file=app/Views/rounds/operate.php,line=763,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=769,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=773,col=0::Variable $round might not be defined.
-::error file=app/Views/rounds/operate.php,line=784,col=0::Variable $totalQty might not be defined.
-::error file=app/Views/sales/checkout.php,line=10,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/checkout.php,line=18,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/checkout.php,line=19,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/checkout.php,line=19,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/checkout.php,line=19,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/checkout.php,line=30,col=0::Variable $prizes might not be defined.
-::error file=app/Views/sales/checkout.php,line=51,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/checkout.php,line=67,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/checkout.php,line=68,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/checkout.php,line=69,col=0::Variable $event might not be defined.
-::error file=app/Views/sales/order.php,line=11,col=0::Variable $order might not be defined.
-::error file=app/Views/sales/order.php,line=19,col=0::Variable $order might not be defined.
-::error file=app/Views/sales/order.php,line=23,col=0::Variable $order might not be defined.
-::error file=app/Views/sales/order.php,line=24,col=0::Variable $is_paid might not be defined.
-::error file=app/Views/sales/order.php,line=28,col=0::Variable $order might not be defined.
-::error file=app/Views/sales/order.php,line=29,col=0::Variable $order might not be defined.
-::error file=app/Views/sales/order.php,line=30,col=0::Variable $order might not be defined.
-::error file=app/Views/sales/order.php,line=31,col=0::Variable $order might not be defined.
-::error file=app/Views/sales/order.php,line=41,col=0::Variable $isAuthenticated might not be defined.
-::error file=app/Views/sales/order.php,line=42,col=0::Variable $order might not be defined.
-::error file=app/Views/sales/order.php,line=55,col=0::Variable $canViewTicketSecrets might not be defined.
-::error file=app/Views/sales/order.php,line=72,col=0::Variable $order might not be defined.
-::error file=app/Views/sellers/index.php,line=20,col=0::Variable $sellers might not be defined.
-::error file=app/Views/sellers/index.php,line=85,col=0::Parameter #1 $string of function htmlspecialchars expects string, string|false given.
-::error file=app/Views/settings/index.php,line=60,col=0::Variable $event might not be defined.
-::error file=app/Views/settings/index.php,line=139,col=0::Variable $prizes might not be defined.
-::error file=app/Views/settings/index.php,line=213,col=0::Variable $pricingHistory might not be defined.
-::error file=app/Views/settings/index.php,line=699,col=0::Parameter #1 $string of function htmlspecialchars expects string, string|false given.
-::error file=app/Views/settings/index.php,line=790,col=0::Variable $operators might not be defined.
-::error file=app/Views/speaker/index.php,line=8,col=0::Variable $round might not be defined.
-::error file=app/Views/speaker/index.php,line=15,col=0::Variable $title might not be defined.
-::error file=app/Views/speaker/index.php,line=18,col=0::Variable $round might not be defined.
-::error file=app/Views/tickets/index.php,line=16,col=0::Variable $search might not be defined.
-::error file=app/Views/tickets/index.php,line=17,col=0::Variable $status might not be defined.
-::error file=app/Views/tickets/index.php,line=18,col=0::Variable $batchId might not be defined.
-::error file=app/Views/tickets/index.php,line=18,col=0::Variable $batches might not be defined.
-::error file=app/Views/tickets/index.php,line=38,col=0::Variable $page might not be defined.
-::error file=app/Views/tickets/index.php,line=38,col=0::Variable $totalPages might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=5,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=6,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=19,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=21,col=0::Variable $layout might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=22,col=0::Variable $masked_cpf might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=22,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=22,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=22,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=22,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=22,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=22,col=0::Variable $ticket might not be defined.
-::error file=app/Views/tickets/print_a4.php,line=22,col=0::Variable $ticket might not be defined.
-::error file=app/Views/users/index.php,line=23,col=0::Variable $users might not be defined.
-::error file=app/Views/users/index.php,line=28,col=0::Variable $users might not be defined.
-::error file=app/Views/users/index.php,line=34,col=0::Variable $users might not be defined.
-::error file=app/Views/users/index.php,line=138,col=0::Variable $isAdmin might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=10,col=0::Variable $ticket might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=26,col=0::Variable $user might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=26,col=0::Variable $user might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=34,col=0::Variable $ticket might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=35,col=0::Variable $ticket might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=38,col=0::Variable $ticket might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=38,col=0::Variable $ticket might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=41,col=0::Variable $ticket might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=47,col=0::Variable $buyer might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=58,col=0::Variable $ticket might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=67,col=0::Variable $order might not be defined.
-::error file=app/Views/validation/authenticated_result.php,line=77,col=0::Variable $ticket might not be defined.
-::error file=app/Views/validation/manual_form.php,line=19,col=0::Variable $ticketNumber might not be defined.
-::error file=app/Views/validation/manual_form.php,line=20,col=0::Variable $checkCode might not be defined.
-::error file=app/Views/validation/manual_form.php,line=24,col=0::Variable $result might not be defined.
-::error file=app/Views/validation/public_result.php,line=18,col=0::Variable $found might not be defined.
-::error file=app/Views/validation/public_result.php,line=22,col=0::Variable $ticket_number might not be defined.
-::error file=app/Views/validation/public_result.php,line=23,col=0::Variable $status might not be defined.
-::error file=app/Views/validation/public_result.php,line=32,col=0::Variable $event_name might not be defined.
 ::error file=database/Migrations.php,line=332,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=database/Migrations.php,line=337,col=0::Cannot call method fetchColumn() on PDOStatement|false.
 ::error file=database/Migrations.php,line=349,col=0::Cannot call method fetchAll() on PDOStatement|false.
@@ -267,17 +47,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          type specified.                                                    
          🪪  missingType.return                                             
  ------ ------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Controllers/DrawController.php                                     
- ------ ----------------------------------------------------------------------- 
-  165    Method App\Controllers\DrawController::json() has parameter $data      
-         with no value type specified in iterable type array.                   
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
 
  ------ --------------------------------------------------- 
   Line   app/Controllers/OnlineSalesController.php          
@@ -308,50 +77,37 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          🪪  nullCoalesce.offset                                                
  ------ ----------------------------------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Controllers/SettingsController.php                                 
- ------ ----------------------------------------------------------------------- 
-  59     Offset 'cash_closings' on array{sales: int, rounds: int,               
-         cash_movements: int, cash_closings: int, operation_days: int,          
-         sellers: int, audit_logs: int, orders: int, ...} on left side of ??    
-         always exists and is not nullable.                                     
-         🪪  nullCoalesce.offset                                                
-  59     Offset 'cash_movements' on array{sales: int, rounds: int,              
-         cash_movements: int, cash_closings: int, operation_days: int,          
-         sellers: int, audit_logs: int, orders: int, ...} on left side of ??    
-         always exists and is not nullable.                                     
-         🪪  nullCoalesce.offset                                                
-  60     Offset 'orders' on array{sales: int, rounds: int, cash_movements:      
-         int, cash_closings: int, operation_days: int, sellers: int,            
-         audit_logs: int, orders: int, ...} on left side of ?? always exists    
-         and is not nullable.                                                   
-         🪪  nullCoalesce.offset                                                
-  80     Parameter #2 $timestamp of function date expects int|null, int|false   
-         given.                                                                 
-         🪪  argument.type                                                      
-  170    Method App\Controllers\SettingsController::saveSettings() has          
-         parameter $updates with no value type specified in iterable type       
-         array.                                                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Controllers/SettingsController.php                                
+ ------ ---------------------------------------------------------------------- 
+  59     Offset 'cash_closings' on array{sales: int, rounds: int,              
+         cash_movements: int, cash_closings: int, operation_days: int,         
+         sellers: int, audit_logs: int, orders: int, ...} on left side of ??   
+         always exists and is not nullable.                                    
+         🪪  nullCoalesce.offset                                               
+  59     Offset 'cash_movements' on array{sales: int, rounds: int,             
+         cash_movements: int, cash_closings: int, operation_days: int,         
+         sellers: int, audit_logs: int, orders: int, ...} on left side of ??   
+         always exists and is not nullable.                                    
+         🪪  nullCoalesce.offset                                               
+  60     Offset 'orders' on array{sales: int, rounds: int, cash_movements:     
+         int, cash_closings: int, operation_days: int, sellers: int,           
+         audit_logs: int, orders: int, ...} on left side of ?? always exists   
+         and is not nullable.                                                  
+         🪪  nullCoalesce.offset                                               
+  80     Parameter #2 $timestamp of function date expects int|null, int|false  
+         given.                                                                
+         🪪  argument.type                                                     
+ ------ ---------------------------------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Controllers/SpeakerController.php                                  
- ------ ----------------------------------------------------------------------- 
-  279    Cannot call method fetch() on PDOStatement|false.                      
-         🪪  method.nonObject                                                   
-  291    Cannot call method fetch() on PDOStatement|false.                      
-         🪪  method.nonObject                                                   
-  294    Method App\Controllers\SpeakerController::jsonResponse() has           
-         parameter $data with no value type specified in iterable type array.   
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
+ ------ --------------------------------------------------- 
+  Line   app/Controllers/SpeakerController.php              
+ ------ --------------------------------------------------- 
+  279    Cannot call method fetch() on PDOStatement|false.  
+         🪪  method.nonObject                               
+  291    Cannot call method fetch() on PDOStatement|false.  
+         🪪  method.nonObject                               
+ ------ --------------------------------------------------- 
 
  ------ -------------------------------------------- 
   Line   app/Controllers/UtilitiesController.php     
@@ -360,76 +116,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          🪪  ternary.alwaysTrue                      
  ------ -------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Controllers/ValidationController.php                               
- ------ ----------------------------------------------------------------------- 
-  185    Method App\Controllers\ValidationController::logValidation() has       
-         parameter $ticket with no value type specified in iterable type        
-         array.                                                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  185    Method App\Controllers\ValidationController::logValidation() has       
-         parameter $user with no value type specified in iterable type array.   
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Core/Auth.php                                                      
- ------ ----------------------------------------------------------------------- 
-  201    Method App\Core\Auth::writeSession() has parameter $user with no       
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Core/Router.php                                                    
- ------ ----------------------------------------------------------------------- 
-  9      Method App\Core\Router::get() has parameter $handler with no value     
-         type specified in iterable type array.                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  9      Method App\Core\Router::get() has parameter $middlewares with no       
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  14     Method App\Core\Router::post() has parameter $handler with no value    
-         type specified in iterable type array.                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  14     Method App\Core\Router::post() has parameter $middlewares with no      
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  19     Method App\Core\Router::add() has parameter $handler with no value     
-         type specified in iterable type array.                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  19     Method App\Core\Router::add() has parameter $middlewares with no       
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
  ------ ------------------------------------------------------------------ 
   Line   app/Core/Session.php                                              
  ------ ------------------------------------------------------------------ 
@@ -437,45 +123,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          always evaluate to true.                                          
          🪪  notIdentical.alwaysTrue                                       
  ------ ------------------------------------------------------------------ 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Core/StrictPDO.php                                                 
- ------ ----------------------------------------------------------------------- 
-  32     Method App\Core\StrictPDO::prepare() has parameter $options with no    
-         value type specified in iterable type array.                           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Core/View.php                                                      
- ------ ----------------------------------------------------------------------- 
-  7      Method App\Core\View::render() has parameter $data with no value type  
-         specified in iterable type array.                                      
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/AuditService.php                                          
- ------ ----------------------------------------------------------------------- 
-  10     Method App\Services\AuditService::log() has parameter $newValues with  
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  10     Method App\Services\AuditService::log() has parameter $oldValues with  
-         no value type specified in iterable type array.                        
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
 
  ------ ----------------------------------------------------------------------- 
   Line   app/Services/BackupService.php                                         
@@ -497,19 +144,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          💡  Type #1 from the union: Type string of parameter #1 $c of passed   
          callable needs to be same or wider than parameter type int|string of   
          accepting callable.                                                    
-  138    Method App\Services\BackupService::cleanDatabaseSelective() has        
-         parameter $selected with no value type specified in iterable type      
-         array.                                                                 
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  201    Method App\Services\BackupService::cleanTables() has parameter         
-         $tables with no value type specified in iterable type array.           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
   209    Cannot call method fetchColumn() on PDOStatement|false.                
          🪪  method.nonObject                                                   
  ------ ----------------------------------------------------------------------- 
@@ -549,23 +183,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          💡  Type null has already been eliminated from mixed.                
  ------ --------------------------------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/GameEngineService.php                                     
- ------ ----------------------------------------------------------------------- 
-  317    Method App\Services\GameEngineService::evaluateRule() has parameter    
-         $called with no value type specified in iterable type array.           
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  317    Method App\Services\GameEngineService::evaluateRule() has parameter    
-         $cells with no value type specified in iterable type array.            
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
  ------ -------------------------------------------- 
   Line   app/Services/PixService.php                 
  ------ -------------------------------------------- 
@@ -573,567 +190,22 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          🪪  ternary.alwaysTrue                      
  ------ -------------------------------------------- 
 
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/PricingService.php                                        
- ------ ----------------------------------------------------------------------- 
-  45     Method App\Services\PricingService::calculate() has parameter $rule    
-         with no value type specified in iterable type array.                   
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
- ------ ----------------------------------------------------------------------- 
-
- ------ ----------------------------------------------------------------------- 
-  Line   app/Services/ReportService.php                                         
- ------ ----------------------------------------------------------------------- 
-  301    Method App\Services\ReportService::exportCsv() has parameter $data     
-         with no value type specified in iterable type array.                   
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  301    Method App\Services\ReportService::exportCsv() has parameter $headers  
-         with no value type specified in iterable type array.                   
-         🪪  missingType.iterableValue                                          
-         💡  See:                                                               
-         https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-i  
-         terable-type                                                           
-  308    Parameter #1 $stream of function fprintf expects resource,             
-         resource|false given.                                                  
-         🪪  argument.type                                                      
-  310    Parameter #1 $stream of function fputcsv expects resource,             
-         resource|false given.                                                  
-         🪪  argument.type                                                      
-  313    Parameter #1 $stream of function fputcsv expects resource,             
-         resource|false given.                                                  
-         🪪  argument.type                                                      
-  316    Parameter #1 $stream of function fclose expects resource,              
-         resource|false given.                                                  
-         🪪  argument.type                                                      
- ------ ----------------------------------------------------------------------- 
-
- ------ -------------------------------------------- 
-  Line   app/Views/audit/consultas.php               
- ------ -------------------------------------------- 
-  27     Variable $filters might not be defined.     
-         🪪  variable.undefined                      
-  32     Variable $filters might not be defined.     
-         🪪  variable.undefined                      
-  37     Variable $filters might not be defined.     
-         🪪  variable.undefined                      
-  42     Variable $filters might not be defined.     
-         🪪  variable.undefined                      
-  47     Variable $filters might not be defined.     
-         🪪  variable.undefined                      
-  52     Variable $filters might not be defined.     
-         🪪  variable.undefined                      
-  57     Variable $filters might not be defined.     
-         🪪  variable.undefined                      
-  74     Variable $totalItems might not be defined.  
-         🪪  variable.undefined                      
-  75     Variable $page might not be defined.        
-         🪪  variable.undefined                      
-  75     Variable $totalPages might not be defined.  
-         🪪  variable.undefined                      
-  148    Variable $totalPages might not be defined.  
-         🪪  variable.undefined                      
-  151    Variable $filters might not be defined.     
-         🪪  variable.undefined                      
-  151    Variable $page might not be defined.        
-         🪪  variable.undefined                      
- ------ -------------------------------------------- 
-
- ------ -------------------------------------------- 
-  Line   app/Views/audit/index.php                   
- ------ -------------------------------------------- 
-  16     Variable $totalLogs might not be defined.   
-         🪪  variable.undefined                      
-  70     Variable $totalPages might not be defined.  
-         🪪  variable.undefined                      
-  73     Variable $page might not be defined.        
-         🪪  variable.undefined                      
- ------ -------------------------------------------- 
-
- ------ ------------------------------------------------- 
-  Line   app/Views/cash/index.php                         
- ------ ------------------------------------------------- 
-  7      Variable $day might not be defined.              
-         🪪  variable.undefined                           
-  97     Variable $cash might not be defined.             
-         🪪  variable.undefined                           
-  101    Variable $cash might not be defined.             
-         🪪  variable.undefined                           
-  109    Variable $cash might not be defined.             
-         🪪  variable.undefined                           
-  113    Variable $cash might not be defined.             
-         🪪  variable.undefined                           
-  126    Variable $cash might not be defined.             
-         🪪  variable.undefined                           
-  131    Variable $cash might not be defined.             
-         🪪  variable.undefined                           
-  131    Variable $cash might not be defined.             
-         🪪  variable.undefined                           
-  724    Variable $nextRoundNumber might not be defined.  
-         🪪  variable.undefined                           
-  729    Variable $nextRoundNumber might not be defined.  
-         🪪  variable.undefined                           
-  736    Variable $cardColors might not be defined.       
-         🪪  variable.undefined                           
-  771    Variable $cash might not be defined.             
-         🪪  variable.undefined                           
- ------ ------------------------------------------------- 
-
- ------ ------------------------------------------------------------------- 
-  Line   app/Views/dashboard/index.php                                      
- ------ ------------------------------------------------------------------- 
-  77     Variable $days might not be defined.                               
-         🪪  variable.undefined                                             
-  78     Variable $selectedDayId might not be defined.                      
-         🪪  variable.undefined                                             
-  97     Variable $totalSales might not be defined.                         
-         🪪  variable.undefined                                             
-  101    Variable $totalQty might not be defined.                           
-         🪪  variable.undefined                                             
-  105    Variable $totalPrizes might not be defined.                        
-         🪪  variable.undefined                                             
-  109    Variable $totalProfit might not be defined.                        
-         🪪  variable.undefined                                             
-  115    Variable $totalMargin might not be defined.                        
-         🪪  variable.undefined                                             
-  121    Variable $activeSellersCount might not be defined.                 
-         🪪  variable.undefined                                             
-  126    Variable $dayReport might not be defined.                          
-         🪪  variable.undefined                                             
-  315    Variable $chartLabelsJson might not be defined.                    
-         🪪  variable.undefined                                             
-  316    Variable $chartSalesJson might not be defined.                     
-         🪪  variable.undefined                                             
-  317    Variable $chartPrizesJson might not be defined.                    
-         🪪  variable.undefined                                             
-  318    Variable $chartProfitJson might not be defined.                    
-         🪪  variable.undefined                                             
-  376    Variable $auditTotalLogs might not be defined.                     
-         🪪  variable.undefined                                             
-  414    Parameter #1 $string of function htmlspecialchars expects string,  
-         string|false given.                                                
-         🪪  argument.type                                                  
-  428    Variable $auditTotalPages might not be defined.                    
-         🪪  variable.undefined                                             
-  430    Variable $auditPage might not be defined.                          
-         🪪  variable.undefined                                             
- ------ ------------------------------------------------------------------- 
-
- ------ ------------------------------------------- 
-  Line   app/Views/day/index.php                    
- ------ ------------------------------------------- 
-  6      Variable $report might not be defined.     
-         🪪  variable.undefined                     
-  7      Variable $report might not be defined.     
-         🪪  variable.undefined                     
-  8      Variable $report might not be defined.     
-         🪪  variable.undefined                     
-  9      Variable $report might not be defined.     
-         🪪  variable.undefined                     
-  10     Variable $report might not be defined.     
-         🪪  variable.undefined                     
-  31     Variable $openRound might not be defined.  
-         🪪  variable.undefined                     
- ------ ------------------------------------------- 
-
- ------ --------------------------------------------- 
-  Line   app/Views/day/open.php                       
- ------ --------------------------------------------- 
-  17     Variable $defaultDate might not be defined.  
-         🪪  variable.undefined                       
- ------ --------------------------------------------- 
-
- ------ ---------------------------------------------------- 
-  Line   app/Views/display/telao.php                         
- ------ ---------------------------------------------------- 
-  9      Variable $round_status might not be defined.        
-         🪪  variable.undefined                              
-  9      Variable $round_status might not be defined.        
-         🪪  variable.undefined                              
-  10     Variable $last_called_number might not be defined.  
-         🪪  variable.undefined                              
- ------ ---------------------------------------------------- 
-
- ------ ---------------------------------------- 
-  Line   app/Views/draw/index.php                
- ------ ---------------------------------------- 
-  15     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  20     Variable $prizes might not be defined.  
-         🪪  variable.undefined                  
-  213    Variable $draw might not be defined.    
-         🪪  variable.undefined                  
- ------ ---------------------------------------- 
-
- ------ -------------------------------------- 
-  Line   app/Views/layouts/main.php            
- ------ -------------------------------------- 
-  106    Variable $slot might not be defined.  
-         🪪  variable.undefined                
- ------ -------------------------------------- 
-
- ------ ------------------------------------------- 
-  Line   app/Views/reports/cash_statement.php       
- ------ ------------------------------------------- 
-  4      Variable $statement might not be defined.  
-         🪪  variable.undefined                     
-  5      Variable $statement might not be defined.  
-         🪪  variable.undefined                     
-  6      Variable $statement might not be defined.  
-         🪪  variable.undefined                     
-  7      Variable $statement might not be defined.  
-         🪪  variable.undefined                     
- ------ ------------------------------------------- 
-
- ------ ----------------------------------------------- 
-  Line   app/Views/reports/index.php                    
- ------ ----------------------------------------------- 
-  20     Variable $tab might not be defined.            
-         🪪  variable.undefined                         
-  39     Variable $days might not be defined.           
-         🪪  variable.undefined                         
-  40     Variable $selectedDayId might not be defined.  
-         🪪  variable.undefined                         
-  48     Variable $dayReport might not be defined.      
-         🪪  variable.undefined                         
-  126    Variable $startDate might not be defined.      
-         🪪  variable.undefined                         
-  130    Variable $endDate might not be defined.        
-         🪪  variable.undefined                         
-  135    Variable $periodReport might not be defined.   
-         🪪  variable.undefined                         
- ------ ----------------------------------------------- 
-
- ------ ------------------------------------------- 
-  Line   app/Views/reports/managerial.php           
- ------ ------------------------------------------- 
-  8      Variable $report might not be defined.     
-         🪪  variable.undefined                     
-  37     Variable $endDate might not be defined.    
-         🪪  variable.undefined                     
-  37     Variable $startDate might not be defined.  
-         🪪  variable.undefined                     
-  188    Variable $report might not be defined.     
-         🪪  variable.undefined                     
-  221    Variable $report might not be defined.     
-         🪪  variable.undefined                     
- ------ ------------------------------------------- 
-
- ------ ------------------------------------------- 
-  Line   app/Views/reports/seller_statement.php     
- ------ ------------------------------------------- 
-  4      Variable $statement might not be defined.  
-         🪪  variable.undefined                     
-  5      Variable $statement might not be defined.  
-         🪪  variable.undefined                     
-  6      Variable $statement might not be defined.  
-         🪪  variable.undefined                     
- ------ ------------------------------------------- 
-
- ------ --------------------------------------------- 
-  Line   app/Views/rounds/operate.php                 
- ------ --------------------------------------------- 
-  21     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  21     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  27     Variable $pricingRule might not be defined.  
-         🪪  variable.undefined                       
-  27     Variable $pricingRule might not be defined.  
-         🪪  variable.undefined                       
-  27     Variable $pricingRule might not be defined.  
-         🪪  variable.undefined                       
-  33     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  38     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  42     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  59     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  69     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  79     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  89     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  99     Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  113    Variable $totalSales might not be defined.   
-         🪪  variable.undefined                       
-  117    Variable $totalQty might not be defined.     
-         🪪  variable.undefined                       
-  121    Variable $totalPrizes might not be defined.  
-         🪪  variable.undefined                       
-  125    Variable $profit might not be defined.       
-         🪪  variable.undefined                       
-  131    Variable $margin might not be defined.       
-         🪪  variable.undefined                       
-  140    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  141    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  149    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  154    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  193    Variable $pricingRule might not be defined.  
-         🪪  variable.undefined                       
-  199    Variable $pricingRule might not be defined.  
-         🪪  variable.undefined                       
-  205    Variable $pricingRule might not be defined.  
-         🪪  variable.undefined                       
-  354    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  356    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  383    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  385    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  449    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  479    Variable $suggestion might not be defined.   
-         🪪  variable.undefined                       
-  483    Variable $suggestion might not be defined.   
-         🪪  variable.undefined                       
-  487    Variable $suggestion might not be defined.   
-         🪪  variable.undefined                       
-  495    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  510    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  511    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  512    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  520    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  527    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  756    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  758    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  759    Variable $totalSales might not be defined.   
-         🪪  variable.undefined                       
-  763    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  769    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  773    Variable $round might not be defined.        
-         🪪  variable.undefined                       
-  784    Variable $totalQty might not be defined.     
-         🪪  variable.undefined                       
- ------ --------------------------------------------- 
-
- ------ ---------------------------------------- 
-  Line   app/Views/sales/checkout.php            
- ------ ---------------------------------------- 
-  10     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  18     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  19     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  19     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  19     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  30     Variable $prizes might not be defined.  
-         🪪  variable.undefined                  
-  51     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  67     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  68     Variable $event might not be defined.   
-         🪪  variable.undefined                  
-  69     Variable $event might not be defined.   
-         🪪  variable.undefined                  
- ------ ---------------------------------------- 
-
- ------ ------------------------------------------------------ 
-  Line   app/Views/sales/order.php                             
- ------ ------------------------------------------------------ 
-  11     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
-  19     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
-  23     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
-  24     Variable $is_paid might not be defined.               
-         🪪  variable.undefined                                
-  28     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
-  29     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
-  30     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
-  31     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
-  41     Variable $isAuthenticated might not be defined.       
-         🪪  variable.undefined                                
-  42     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
-  55     Variable $canViewTicketSecrets might not be defined.  
-         🪪  variable.undefined                                
-  72     Variable $order might not be defined.                 
-         🪪  variable.undefined                                
- ------ ------------------------------------------------------ 
-
- ------ ------------------------------------------------------------------- 
-  Line   app/Views/sellers/index.php                                        
- ------ ------------------------------------------------------------------- 
-  20     Variable $sellers might not be defined.                            
-         🪪  variable.undefined                                             
-  85     Parameter #1 $string of function htmlspecialchars expects string,  
-         string|false given.                                                
-         🪪  argument.type                                                  
- ------ ------------------------------------------------------------------- 
-
- ------ ------------------------------------------------------------------- 
-  Line   app/Views/settings/index.php                                       
- ------ ------------------------------------------------------------------- 
-  60     Variable $event might not be defined.                              
-         🪪  variable.undefined                                             
-  139    Variable $prizes might not be defined.                             
-         🪪  variable.undefined                                             
-  213    Variable $pricingHistory might not be defined.                     
-         🪪  variable.undefined                                             
-  699    Parameter #1 $string of function htmlspecialchars expects string,  
-         string|false given.                                                
-         🪪  argument.type                                                  
-  790    Variable $operators might not be defined.                          
-         🪪  variable.undefined                                             
- ------ ------------------------------------------------------------------- 
-
- ------ --------------------------------------- 
-  Line   app/Views/speaker/index.php            
- ------ --------------------------------------- 
-  8      Variable $round might not be defined.  
-         🪪  variable.undefined                 
-  15     Variable $title might not be defined.  
-         🪪  variable.undefined                 
-  18     Variable $round might not be defined.  
-         🪪  variable.undefined                 
- ------ --------------------------------------- 
-
- ------ -------------------------------------------- 
-  Line   app/Views/tickets/index.php                 
- ------ -------------------------------------------- 
-  16     Variable $search might not be defined.      
-         🪪  variable.undefined                      
-  17     Variable $status might not be defined.      
-         🪪  variable.undefined                      
-  18     Variable $batchId might not be defined.     
-         🪪  variable.undefined                      
-  18     Variable $batches might not be defined.     
-         🪪  variable.undefined                      
-  38     Variable $page might not be defined.        
-         🪪  variable.undefined                      
-  38     Variable $totalPages might not be defined.  
-         🪪  variable.undefined                      
- ------ -------------------------------------------- 
-
- ------ -------------------------------------------- 
-  Line   app/Views/tickets/print_a4.php              
- ------ -------------------------------------------- 
-  5      Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  6      Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  19     Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  21     Variable $layout might not be defined.      
-         🪪  variable.undefined                      
-  22     Variable $masked_cpf might not be defined.  
-         🪪  variable.undefined                      
-  22     Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  22     Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  22     Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  22     Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  22     Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  22     Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
-  22     Variable $ticket might not be defined.      
-         🪪  variable.undefined                      
- ------ -------------------------------------------- 
-
- ------ ----------------------------------------- 
-  Line   app/Views/users/index.php                
- ------ ----------------------------------------- 
-  23     Variable $users might not be defined.    
-         🪪  variable.undefined                   
-  28     Variable $users might not be defined.    
-         🪪  variable.undefined                   
-  34     Variable $users might not be defined.    
-         🪪  variable.undefined                   
-  138    Variable $isAdmin might not be defined.  
-         🪪  variable.undefined                   
- ------ ----------------------------------------- 
-
- ------ ----------------------------------------------- 
-  Line   app/Views/validation/authenticated_result.php  
- ------ ----------------------------------------------- 
-  10     Variable $ticket might not be defined.         
-         🪪  variable.undefined                         
-  26     Variable $user might not be defined.           
-         🪪  variable.undefined                         
-  26     Variable $user might not be defined.           
-         🪪  variable.undefined                         
-  34     Variable $ticket might not be defined.         
-         🪪  variable.undefined                         
-  35     Variable $ticket might not be defined.         
-         🪪  variable.undefined                         
-  38     Variable $ticket might not be defined.         
-         🪪  variable.undefined                         
-  38     Variable $ticket might not be defined.         
-         🪪  variable.undefined                         
-  41     Variable $ticket might not be defined.         
-         🪪  variable.undefined                         
-  47     Variable $buyer might not be defined.          
-         🪪  variable.undefined                         
-  58     Variable $ticket might not be defined.         
-         🪪  variable.undefined                         
-  67     Variable $order might not be defined.          
-         🪪  variable.undefined                         
-  77     Variable $ticket might not be defined.         
-         🪪  variable.undefined                         
- ------ ----------------------------------------------- 
-
- ------ ---------------------------------------------- 
-  Line   app/Views/validation/manual_form.php          
- ------ ---------------------------------------------- 
-  19     Variable $ticketNumber might not be defined.  
-         🪪  variable.undefined                        
-  20     Variable $checkCode might not be defined.     
-         🪪  variable.undefined                        
-  24     Variable $result might not be defined.        
-         🪪  variable.undefined                        
- ------ ---------------------------------------------- 
-
- ------ ----------------------------------------------- 
-  Line   app/Views/validation/public_result.php         
- ------ ----------------------------------------------- 
-  18     Variable $found might not be defined.          
-         🪪  variable.undefined                         
-  22     Variable $ticket_number might not be defined.  
-         🪪  variable.undefined                         
-  23     Variable $status might not be defined.         
-         🪪  variable.undefined                         
-  32     Variable $event_name might not be defined.     
-         🪪  variable.undefined                         
- ------ ----------------------------------------------- 
+ ------ ------------------------------------------------------------ 
+  Line   app/Services/ReportService.php                              
+ ------ ------------------------------------------------------------ 
+  308    Parameter #1 $stream of function fprintf expects resource,  
+         resource|false given.                                       
+         🪪  argument.type                                           
+  310    Parameter #1 $stream of function fputcsv expects resource,  
+         resource|false given.                                       
+         🪪  argument.type                                           
+  313    Parameter #1 $stream of function fputcsv expects resource,  
+         resource|false given.                                       
+         🪪  argument.type                                           
+  316    Parameter #1 $stream of function fclose expects resource,   
+         resource|false given.                                       
+         🪪  argument.type                                           
+ ------ ------------------------------------------------------------ 
 
  ------ --------------------------------------------------------- 
   Line   database/Migrations.php                                  
@@ -1148,6 +220,6 @@ Note: Using configuration file /home/runner/work/show-de-premios/show-de-premios
          🪪  method.nonObject                                     
  ------ --------------------------------------------------------- 
 
- [ERROR] Found 254 errors                                                       
+ [ERROR] Found 34 errors                                                        
 
 PHPStan exit code: 1
