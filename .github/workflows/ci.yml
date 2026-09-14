@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
+      - homologacao
       - "fix/**"
       - "feature/**"
       - "release/**"
   pull_request:
     branches:
       - main
+      - homologacao
 
 permissions:
   contents: read
