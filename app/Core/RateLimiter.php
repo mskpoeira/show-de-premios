@@ -18,7 +18,7 @@ class RateLimiter
 
         $fp = @fopen($path, 'c+');
         if (!$fp) {
-            return true; // nunca derruba a aplicação por falha de rate limiter
+            return true;
         }
 
         try {
@@ -27,10 +27,13 @@ class RateLimiter
             }
 
             $raw = stream_get_contents($fp);
-            if ($raw) {
+            if (is_string($raw) && $raw !== '') {
                 $decoded = json_decode($raw, true);
                 if (is_array($decoded) && isset($decoded['start'], $decoded['count'])) {
-                    $state = $decoded;
+                    $state = [
+                        'start' => (int)$decoded['start'],
+                        'count' => (int)$decoded['count'],
+                    ];
                 }
             }
 
@@ -39,9 +42,10 @@ class RateLimiter
             }
 
             $state['count'] = (int)$state['count'] + 1;
+            $payload = json_encode($state, JSON_THROW_ON_ERROR);
             rewind($fp);
             ftruncate($fp, 0);
-            fwrite($fp, json_encode($state));
+            fwrite($fp, $payload);
             fflush($fp);
             flock($fp, LOCK_UN);
 
