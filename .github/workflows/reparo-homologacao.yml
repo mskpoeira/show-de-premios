@@ -10,7 +10,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  HOMOLOG_HOST: showdepremios-hml.77-37-40-81.sslip.io
+  HOMOLOG_HOST: showdepremios-hml.77-37-40-81.nip.io
 
 jobs:
   reparar:
@@ -29,7 +29,7 @@ jobs:
             set -eu
             CADDY_FILE=/app/sgr/Caddyfile
             PROXY=sgr-proxy-prod
-            HOST=showdepremios-hml.77-37-40-81.sslip.io
+            HOST=showdepremios-hml.77-37-40-81.nip.io
             BACKUP="${CADDY_FILE}.pre-homologacao.$(date +%s)"
 
             test -f "$CADDY_FILE"
@@ -39,7 +39,7 @@ jobs:
               cat >> "$CADDY_FILE" <<'CADDY'
 
             # BEGIN SHOWDEPREMIOS HOMOLOGACAO
-            showdepremios-hml.77-37-40-81.sslip.io {
+            showdepremios-hml.77-37-40-81.nip.io {
                 import security
                 header X-Robots-Tag "noindex, nofollow, noarchive"
                 handle {
@@ -67,7 +67,7 @@ jobs:
             docker exec "$PROXY" caddy reload --config /etc/caddy/Caddyfile
 
             OK=0
-            for i in $(seq 1 20); do
+            for i in $(seq 1 30); do
               if curl -fsSk --resolve "$HOST:443:127.0.0.1" "https://$HOST/api/ping" | grep -q '"status":"online"'; then
                 OK=1
                 break
