@@ -10,6 +10,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  HOMOLOG_HOST: showdepremios-hml.77-37-40-81.sslip.io
 
 concurrency:
   group: show-de-premios-homologacao
@@ -96,6 +97,8 @@ jobs:
             IMAGE_ROLLBACK=showdepremios-homologacao:rollback
             CONTAINER=showdepremios-homologacao
             PORT=18080
+            PROXY_CONTAINER=sgr-proxy-prod
+            HOMOLOG_HOST=showdepremios-hml.77-37-40-81.sslip.io
 
             mkdir -p "$APP_DIR" "$STORAGE_DIR/logs" "$STORAGE_DIR/backups" "$STORAGE_DIR/rate-limit"
             mv -f /tmp/release-showdepremios-homologacao.tar.gz "$APP_DIR/"
@@ -104,6 +107,16 @@ jobs:
             rm -f release-showdepremios-homologacao.tar.gz
             chmod -R 775 "$STORAGE_DIR"
             chown -R 33:33 "$STORAGE_DIR" || true
+
+            NET=''
+            if docker inspect "$PROXY_CONTAINER" >/dev/null 2>&1; then
+              NET=$(docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROXY_CONTAINER" | grep -Ev '^(bridge|host|none)$' | head -n 1 || true)
+            fi
+            if [ -z "$NET" ]; then
+              echo 'ERRO: rede Docker do proxy nao encontrada.'
+              exit 1
+            fi
+            echo "Rede do proxy: $NET"
 
             OLD_IMAGE=$(docker inspect -f '{{.Image}}' "$CONTAINER" 2>/dev/null || true)
             if [ -n "$OLD_IMAGE" ]; then docker tag "$OLD_IMAGE" "$IMAGE_ROLLBACK" || true; fi
@@ -119,6 +132,8 @@ jobs:
             docker run -d \
               --name "$CONTAINER" \
               --restart always \
+              --network "$NET" \
+              --network-alias showdepremios-homologacao \
               -p "$PORT:80" \
               -e APP_ENV=homologacao \
               -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
@@ -132,23 +147,68 @@ jobs:
               fi
               sleep 3
             done
+            if [ "$ONLINE" -ne 1 ]; then
+              echo 'Falha no health-check local da homologacao. Iniciando rollback.'
+              docker logs --tail 150 "$CONTAINER" || true
+              docker rm -f "$CONTAINER" || true
+              if docker image inspect "$IMAGE_ROLLBACK" >/dev/null 2>&1; then
+                docker run -d \
+                  --name "$CONTAINER" \
+                  --restart always \
+                  --network "$NET" \
+                  --network-alias showdepremios-homologacao \
+                  -p "$PORT:80" \
+                  -e APP_ENV=homologacao \
+                  -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
+                  "$IMAGE_ROLLBACK"
+              fi
+              exit 1
+            fi
 
-            if [ "$ONLINE" -eq 1 ]; then
-              echo 'HOMOLOGACAO ONLINE EM http://77.37.40.81:18080'
-              docker image rm "$IMAGE_ROLLBACK" >/dev/null 2>&1 || true
+            echo 'Configurando acesso publico da homologacao no Caddy...'
+            CADDY_DEST=/etc/caddy/Caddyfile
+            CADDY_SOURCE=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/etc/caddy/Caddyfile"}}{{.Source}}{{end}}{{end}}' "$PROXY_CONTAINER" 2>/dev/null || true)
+            if [ -n "$CADDY_SOURCE" ] && [ -f "$CADDY_SOURCE" ]; then
+              CADDY_FILE="$CADDY_SOURCE"
+            else
+              CADDY_FILE=/tmp/Caddyfile.showdepremios-homologacao
+              docker cp "$PROXY_CONTAINER:$CADDY_DEST" "$CADDY_FILE"
+            fi
+
+            TMP_FILE="${CADDY_FILE}.tmp"
+            sed '/# BEGIN SHOWDEPREMIOS HOMOLOGACAO/,/# END SHOWDEPREMIOS HOMOLOGACAO/d' "$CADDY_FILE" > "$TMP_FILE"
+            cat >> "$TMP_FILE" <<EOF
+
+# BEGIN SHOWDEPREMIOS HOMOLOGACAO
+$HOMOLOG_HOST {
+    reverse_proxy showdepremios-homologacao:80
+}
+# END SHOWDEPREMIOS HOMOLOGACAO
+EOF
+            mv "$TMP_FILE" "$CADDY_FILE"
+
+            if [ -z "$CADDY_SOURCE" ]; then
+              docker cp "$CADDY_FILE" "$PROXY_CONTAINER:$CADDY_DEST"
+            fi
+
+            docker exec "$PROXY_CONTAINER" caddy validate --config "$CADDY_DEST"
+            docker exec "$PROXY_CONTAINER" caddy reload --config "$CADDY_DEST"
+
+            echo "HOMOLOGACAO PUBLICADA EM https://$HOMOLOG_HOST"
+            docker image rm "$IMAGE_ROLLBACK" >/dev/null 2>&1 || true
+
+      - name: Validar homologacao pela Internet
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 24); do
+            if curl --fail --silent --show-error --location --max-time 15 "https://${HOMOLOG_HOST}/api/ping"; then
+              echo
+              echo "Homologacao acessivel publicamente: https://${HOMOLOG_HOST}"
               exit 0
             fi
-
-            echo 'Falha no health-check da homologacao. Iniciando rollback.'
-            docker logs --tail 150 "$CONTAINER" || true
-            docker rm -f "$CONTAINER" || true
-            if docker image inspect "$IMAGE_ROLLBACK" >/dev/null 2>&1; then
-              docker run -d \
-                --name "$CONTAINER" \
-                --restart always \
-                -p "$PORT:80" \
-                -e APP_ENV=homologacao \
-                -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
-                "$IMAGE_ROLLBACK"
-            fi
-            exit 1
+            echo "Aguardando HTTPS/Caddy ($i/24)..."
+            sleep 5
+          done
+          echo 'ERRO: homologacao nao ficou acessivel publicamente.'
+          exit 1
