@@ -1,0 +1,100 @@
+name: Reparo Publicacao Homologacao
+
+on:
+  push:
+    branches: [diag-homologacao]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  HOMOLOG_HOST: showdepremios-hml.77-37-40-81.sslip.io
+
+jobs:
+  reparar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aplicar rota transacional no Caddy compartilhado
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
+          username: ${{ secrets.HOSTINGER_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: "120s"
+          command_timeout: "10m"
+          script: |
+            set -eu
+            CADDY_FILE=/app/sgr/Caddyfile
+            PROXY=sgr-proxy-prod
+            HOST=showdepremios-hml.77-37-40-81.sslip.io
+            BACKUP="${CADDY_FILE}.pre-homologacao.$(date +%s)"
+
+            test -f "$CADDY_FILE"
+            cp -a "$CADDY_FILE" "$BACKUP"
+
+            if ! grep -qF "$HOST" "$CADDY_FILE"; then
+              cat >> "$CADDY_FILE" <<'CADDY'
+
+            # BEGIN SHOWDEPREMIOS HOMOLOGACAO
+            showdepremios-hml.77-37-40-81.sslip.io {
+                import security
+                header X-Robots-Tag "noindex, nofollow, noarchive"
+                handle {
+                    reverse_proxy showdepremios-homologacao:80 {
+                        header_up Host {host}
+                        header_up X-Forwarded-Proto https
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Port 443
+                    }
+                }
+                log {
+                    output file /var/log/caddy/showdepremios_homologacao_access.log
+                }
+            }
+            # END SHOWDEPREMIOS HOMOLOGACAO
+            CADDY
+            fi
+
+            if ! docker exec "$PROXY" caddy validate --config /etc/caddy/Caddyfile; then
+              cp -a "$BACKUP" "$CADDY_FILE"
+              echo 'Caddy invalido; configuracao anterior restaurada.'
+              exit 1
+            fi
+
+            docker exec "$PROXY" caddy reload --config /etc/caddy/Caddyfile
+
+            OK=0
+            for i in $(seq 1 20); do
+              if curl -fsSk --resolve "$HOST:443:127.0.0.1" "https://$HOST/api/ping" | grep -q '"status":"online"'; then
+                OK=1
+                break
+              fi
+              sleep 3
+            done
+            if [ "$OK" -ne 1 ]; then
+              cp -a "$BACKUP" "$CADDY_FILE"
+              docker exec "$PROXY" caddy reload --config /etc/caddy/Caddyfile || true
+              echo 'Falha no HTTPS local; rollback do proxy concluido.'
+              exit 1
+            fi
+
+            rm -f "$BACKUP"
+            echo 'Rota HTTPS de homologacao aplicada com sucesso.'
+
+      - name: Validar HTTPS publico
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if RESPONSE="$(curl --fail --silent --show-error --location --max-time 15 "https://${HOMOLOG_HOST}/api/ping" 2>/dev/null)" && printf '%s' "$RESPONSE" | grep -q '"status":"online"'; then
+              echo "Homologacao publica OK: https://${HOMOLOG_HOST}"
+              printf '%s\n' "$RESPONSE"
+              exit 0
+            fi
+            sleep 4
+          done
+          echo 'HTTPS publico ainda indisponivel.'
+          exit 1
