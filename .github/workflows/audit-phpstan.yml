@@ -5,16 +5,11 @@ on:
     branches:
       - fix/auditoria-20260914
 
-permissions:
-  contents: write
-
 jobs:
   phpstan-audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -31,15 +26,10 @@ jobs:
           STATUS=$?
           echo "PHPStan exit code: $STATUS" >> AUDIT-PHPSTAN.txt
           exit 0
-      - name: Commit audit report
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add AUDIT-PHPSTAN.txt
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m 'chore(audit): capture PHPStan findings [skip ci]'
-          git push origin HEAD:fix/auditoria-20260914
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpstan-audit-${{ github.sha }}
+          path: AUDIT-PHPSTAN.txt
+          if-no-files-found: error
+          retention-days: 3
