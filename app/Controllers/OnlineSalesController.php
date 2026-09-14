@@ -44,35 +44,33 @@ class OnlineSalesController
         }
 
         $name = trim((string)($_POST['name'] ?? ''));
-        $cpf = preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
+        $cpf = (string)preg_replace('/\D/', '', (string)($_POST['cpf'] ?? ''));
         $phoneRaw = trim((string)($_POST['phone'] ?? ''));
         $email = trim((string)($_POST['email'] ?? ''));
         $quantity = (int)($_POST['quantity'] ?? 1);
         $wantsEmail = !empty($_POST['wants_email']) ? 1 : 0;
 
         if (mb_strlen($name) < 3) {
-            return $this->checkoutError('Por favor, informe seu nome completo.');
+            $this->checkoutError('Por favor, informe seu nome completo.');
         }
         if (!$this->isValidCpf($cpf)) {
-            return $this->checkoutError('Por favor, informe um CPF válido.');
+            $this->checkoutError('Por favor, informe um CPF válido.');
         }
 
-        $phoneDigits = preg_replace('/\D/', '', $phoneRaw);
+        $phoneDigits = (string)preg_replace('/\D/', '', $phoneRaw);
         if (strlen($phoneDigits) < 10 || strlen($phoneDigits) > 13) {
-            return $this->checkoutError('Por favor, informe um telefone/WhatsApp válido.');
+            $this->checkoutError('Por favor, informe um telefone/WhatsApp válido.');
         }
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->checkoutError('Informe um e-mail válido ou deixe o campo vazio.');
+            $this->checkoutError('Informe um e-mail válido ou deixe o campo vazio.');
         }
         if ($quantity < 1 || $quantity > 50) {
-            return $this->checkoutError('A quantidade permitida por pedido é de 1 a 50 cartelas.');
+            $this->checkoutError('A quantidade permitida por pedido é de 1 a 50 cartelas.');
         }
 
-        if (str_starts_with($phoneDigits, '55') && strlen($phoneDigits) >= 12) {
-            $phoneNormalized = '+' . $phoneDigits;
-        } else {
-            $phoneNormalized = '+55' . $phoneDigits;
-        }
+        $phoneNormalized = (str_starts_with($phoneDigits, '55') && strlen($phoneDigits) >= 12)
+            ? '+' . $phoneDigits
+            : '+55' . $phoneDigits;
 
         $pdo = Database::getConnection();
         $pdo->beginTransaction();
@@ -119,7 +117,7 @@ class OnlineSalesController
             $stmtOrder->execute([(int)$event['id'], $buyerId, $orderCode, $quantity, $totalAmount, $pricingSnapshot]);
             $orderId = (int)$pdo->lastInsertId();
 
-            $stmtBatch = $pdo->prepare("SELECT id FROM event_batches WHERE event_id = ? AND is_locked IN (0,1) ORDER BY id ASC LIMIT 1");
+            $stmtBatch = $pdo->prepare("SELECT id FROM event_batches WHERE event_id = ? AND current_sequence < end_sequence ORDER BY id ASC LIMIT 1");
             $stmtBatch->execute([(int)$event['id']]);
             $batchId = (int)($stmtBatch->fetchColumn() ?: 0);
             if ($batchId <= 0) {
@@ -142,7 +140,8 @@ class OnlineSalesController
                     (string)($config['city'] ?? 'Ubatuba'),
                     'Show de Premios ' . $orderCode,
                     $totalAmount,
-                    substr(str_replace('-', '', $orderCode), 0, 25)
+                    substr(str_replace('-', '', $orderCode), 0, 25),
+                    (string)($config['type'] ?? '')
                 );
             }
 
@@ -308,7 +307,7 @@ class OnlineSalesController
         }
     }
 
-    private function checkoutError(string $message): void
+    private function checkoutError(string $message): never
     {
         $_SESSION['flash_error'] = $message;
         Response::redirect('/comprar');
