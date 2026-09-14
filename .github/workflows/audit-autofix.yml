@@ -1,0 +1,111 @@
+name: Audit Autofix
+
+on:
+  push:
+    branches:
+      - fix/auditoria-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  residual-fixes:
+    if: ${{ !contains(github.event.head_commit.message, '[skip autofix]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply exact residual audit fixes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def rep(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old in text:
+                  p.write_text(text.replace(old, new))
+                  print('patched', path)
+              else:
+                  print('already clean', path)
+
+          rep('app/Controllers/UtilitiesController.php',
+              "$settings = $stmtSettings ? $stmtSettings->fetchAll(\\PDO::FETCH_KEY_PAIR) : [];",
+              "$settings = $stmtSettings->fetchAll(\\PDO::FETCH_KEY_PAIR);")
+
+          rep('app/Services/PixService.php',
+              "$settings = $stmt ? $stmt->fetchAll(PDO::FETCH_KEY_PAIR) : [];",
+              "$settings = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);")
+          rep('app/Services/PixService.php',
+              "$key = !empty($rawKey) ? $rawKey : 'mskpoeira@gmail.com';",
+              "$key = $rawKey;")
+          rep('app/Services/PixService.php',
+              "$rawShow = $settings['pix_show_on_telao'] ?? 'true';\n        $show = !in_array(strtolower((string)$rawShow), ['false', '0', 'no', 'off'], true);",
+              "$rawShow = $settings['pix_show_on_telao'] ?? 'false';\n        $show = $key !== '' && !in_array(strtolower((string)$rawShow), ['false', '0', 'no', 'off'], true);")
+
+          rep('app/Controllers/SettingsController.php',
+              "$tableCounts['cash']=($tableCounts['cash_movements']??0)+($tableCounts['cash_closings']??0);\n            $tableCounts['digital_orders']=$tableCounts['orders']??0;",
+              "$tableCounts['cash']=$tableCounts['cash_movements']+$tableCounts['cash_closings'];\n            $tableCounts['digital_orders']=$tableCounts['orders'];")
+          rep('app/Controllers/SettingsController.php',
+              "$dayBefore=date('Y-m-d',strtotime($effective.' -1 day'));",
+              "$dayBefore=(new \\DateTimeImmutable($effective))->modify('-1 day')->format('Y-m-d');")
+
+          rep('app/Services/BackupService.php',
+              "use App\\Core\\Database;\nuse Database\\Migrations;",
+              "use App\\Core\\Database;\nuse App\\Core\\StrictPDO;\nuse Database\\Migrations;")
+          rep('app/Services/BackupService.php', "PDO $pdo", "StrictPDO $pdo")
+          rep('app/Services/BackupService.php',
+              "$columns=array_keys($rows[0]);",
+              "$columns=array_map('strval',array_keys($rows[0]));")
+
+          rep('database/Migrations.php',
+              "use App\\Core\\Database;\nuse PDO;",
+              "use App\\Core\\Database;\nuse App\\Core\\StrictPDO;\nuse PDO;")
+          rep('database/Migrations.php', "PDO $pdo", "StrictPDO $pdo")
+
+          rep('app/Controllers/OnlineSalesController.php',
+              "use App\\Core\\Response;\nuse App\\Core\\View;",
+              "use App\\Core\\Response;\nuse App\\Core\\StrictPDO;\nuse App\\Core\\View;")
+          rep('app/Controllers/OnlineSalesController.php',
+              "private function activeDigitalEvent(PDO $pdo): ?array",
+              "private function activeDigitalEvent(StrictPDO $pdo): ?array")
+
+          rep('app/Controllers/SpeakerController.php',
+              "use App\\Core\\Response;\nuse App\\Core\\View;",
+              "use App\\Core\\Response;\nuse App\\Core\\StrictPDO;\nuse App\\Core\\View;")
+          rep('app/Controllers/SpeakerController.php', "private function activeEvent(PDO $pdo): ?array", "private function activeEvent(StrictPDO $pdo): ?array")
+          rep('app/Controllers/SpeakerController.php', "private function findRound(PDO $pdo, int $roundId): ?array", "private function findRound(StrictPDO $pdo, int $roundId): ?array")
+
+          rep('app/Controllers/RoundController.php',
+              "        $finalStatus = in_array($requestedStatus, $allowedStatuses, true) ? $requestedStatus : $round['status'];\n        if (!in_array($finalStatus, $allowedStatuses, true)) {\n            $finalStatus = 'OPEN';\n        }",
+              "        $finalStatus = in_array($requestedStatus, $allowedStatuses, true) ? $requestedStatus : $round['status'];")
+          rep('app/Controllers/RoundController.php',
+              "                'CHECKING' => 'Rodada em conferência',\n                default => $finalStatus",
+              "                'CHECKING' => 'Rodada em conferência'")
+          rep('app/Controllers/RoundController.php',
+              "$msg = \"Status da rodada alterado para: \" . ($statusLabels[$newStatus] ?? $newStatus);",
+              "$msg = \"Status da rodada alterado para: \" . $statusLabels[$newStatus];")
+
+          rep('app/Services/ReportService.php',
+              "$output = fopen('php://output', 'w');\n        // UTF-8 BOM for Excel pt-BR",
+              "$output = fopen('php://output', 'w');\n        if ($output === false) {\n            throw new \\RuntimeException('Não foi possível abrir o fluxo de exportação CSV.');\n        }\n        // UTF-8 BOM for Excel pt-BR")
+          PY
+      - name: Validate PHP syntax
+        run: |
+          find app database -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l index.php
+      - name: Commit residual fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app database
+          if git diff --cached --quiet; then
+            echo 'No residual changes required.'
+            exit 0
+          fi
+          git commit -m 'fix(audit): apply residual code corrections [skip autofix]'
+          git push origin HEAD:fix/auditoria-20260914
