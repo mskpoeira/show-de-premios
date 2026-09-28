@@ -33,7 +33,7 @@ jobs:
             CADDY_FILE=$(docker inspect sgr-proxy-prod --format '{{range .Mounts}}{{if eq .Destination "/etc/caddy/Caddyfile"}}{{.Source}}{{end}}{{end}}')
             grep -A18 -B2 'presenca.mskpoeira.com.br' "$CADDY_FILE" || true
             echo "=== Logs Caddy ==="
-            docker logs --since 15m sgr-proxy-prod 2>&1 | tail -n 250 || true
+            docker logs sgr-proxy-prod 2>&1 | grep -i "presenca.mskpoeira.com.br" | tail -n 250 || true
             echo "=== Teste upstream ==="
             docker exec sgr-proxy-prod wget -qO- http://presenca-anonima:80/ | head -c 300 || true
             echo
