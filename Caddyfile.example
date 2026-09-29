@@ -2,7 +2,6 @@
 # CADDYFILE — SHOW DE PRÊMIOS (PRODUÇÃO INDEPENDENTE)
 # Domínio: showdepremios.mskpoeira.com.br
 # Diretório: /var/www/show-de-premios
-# Isolado do SGR (sgr.mskpoeira.com.br)
 # =============================================================================
 
 showdepremios.mskpoeira.com.br {
