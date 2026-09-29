@@ -1,23 +1,11 @@
-# IDENTIDADE DO PROJETO
+# Show de Prêmios — identidade do projeto
 
-Sistema:
-Show de Prêmios
+Repositório: `mskpoeira/show-de-premios`
 
-Domínio oficial:
-https://showdepremios.mskpoeira.com.br
+## Regra permanente de isolamento
 
-Repositório:
-mskpoeira/show-de-premios
+O projeto é autocontido.
 
-Finalidade:
-Sistema independente de bingo, sorteios, vendas, cartelas, premiações, PIX e telão.
+É proibido compartilhar ou consumir código, bancos, volumes, redes Docker, proxy, autenticação, APIs, workflows, redirects, fallbacks, navegação ou documentação operacional pertencente a qualquer outro projeto.
 
-ESTE PROJETO NÃO É:
-- SGR – Sistema de Gerenciamento de Retiros
-- Site Jovens de Assis
-
-Não depender do banco, Docker Compose, Caddy ou workflow do SGR.
-
-Não depender da aplicação Jovens de Assis.
-
-Toda infraestrutura operacional deverá ser própria.
+Todos os recursos de execução e persistência devem usar nomes exclusivos do Show de Prêmios.
