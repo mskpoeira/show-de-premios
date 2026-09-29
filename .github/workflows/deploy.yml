@@ -1,4 +1,4 @@
-name: Deploy Show de Prêmios para Produção
+name: Deploy Show de Prêmios
 
 on:
   workflow_run:
@@ -18,16 +18,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-showdepremios:
-    name: Deploy Show de Prêmios (Hostinger VPS - Isolado)
+  deploy:
+    name: Deploy isolado do Show de Prêmios
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar código validado do repositório
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
@@ -37,42 +36,31 @@ jobs:
           php -l index.php
           php -l fire-test.php
 
-      - name: Criar pacote de release isolado
+      - name: Criar release
         shell: bash
         run: |
           set -euo pipefail
           RELEASE_DIR="$(mktemp -d)"
-          rsync -av \
-            --exclude 'storage/' \
-            --exclude '.git/' \
-            --exclude '.github/' \
-            --exclude '.env' \
-            --exclude 'deploy_key' \
-            --exclude 'deploy_key.pub' \
-            --exclude 'showdepremios_release/' \
-            --exclude 'release-showdepremios.tar.gz' \
-            ./ "$RELEASE_DIR/"
+          rsync -av             --exclude 'storage/'             --exclude '.git/'             --exclude '.github/'             --exclude '.env'             ./ "$RELEASE_DIR/"
           tar -czf release-showdepremios.tar.gz -C "$RELEASE_DIR" .
           rm -rf "$RELEASE_DIR"
 
-      - name: Transferir release para o servidor
+      - name: Transferir release
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
-          username: ${{ secrets.HOSTINGER_USER || 'root' }}
+          host: ${{ secrets.HOSTINGER_IP }}
+          username: ${{ secrets.HOSTINGER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          timeout: "120s"
-          command_timeout: "10m"
           source: "release-showdepremios.tar.gz"
           target: "/tmp"
           overwrite: true
 
-      - name: Instalar e rodar Show de Prêmios isolado no VPS
+      - name: Publicar runtime exclusivo
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.HOSTINGER_IP || '77.37.40.81' }}
-          username: ${{ secrets.HOSTINGER_USER || 'root' }}
+          host: ${{ secrets.HOSTINGER_IP }}
+          username: ${{ secrets.HOSTINGER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           command_timeout: "20m"
@@ -82,54 +70,30 @@ jobs:
             APP_DIR=/app/show-de-premios
             STORAGE_DIR="$APP_DIR/storage"
             CANDIDATE_STORAGE="$APP_DIR/storage-candidate"
+            NETWORK=showdepremios
+            BIND=${SHOW_DE_PREMIOS_BIND:-127.0.0.1:38080}
             IMAGE_NEW=showdepremios-app:candidate
             IMAGE_LATEST=showdepremios-app:latest
             IMAGE_ROLLBACK=showdepremios-app:rollback
             CONTAINER=showdepremios-app
             CANDIDATE=showdepremios-candidate
-            PROXY_CONTAINER=sgr-proxy-prod
             DB_BACKUP=''
 
-            echo '=================================================='
-            echo 'DEPLOY SHOW DE PRÊMIOS'
-            echo '=================================================='
-
-            mkdir -p "$APP_DIR"
+            mkdir -p "$APP_DIR" "$STORAGE_DIR/logs" "$STORAGE_DIR/backups" "$STORAGE_DIR/rate-limit"
             mv -f /tmp/release-showdepremios.tar.gz "$APP_DIR/"
             cd "$APP_DIR"
-
-            echo 'Extraindo release...'
             tar -xzf release-showdepremios.tar.gz
             rm -f release-showdepremios.tar.gz
 
-            mkdir -p storage/logs storage/backups storage/rate-limit
-            chmod -R 775 storage
-            chown -R 33:33 storage || true
+            chown -R 33:33 "$STORAGE_DIR" || true
+            chmod -R 775 "$STORAGE_DIR"
+            docker network inspect "$NETWORK" >/dev/null 2>&1 || docker network create "$NETWORK" >/dev/null
 
-            echo 'Detectando rede real do proxy Caddy...'
-            NET=''
-            if docker inspect "$PROXY_CONTAINER" >/dev/null 2>&1; then
-              NET=$(docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROXY_CONTAINER" | grep -Ev '^(bridge|host|none)$' | head -n 1 || true)
-            fi
-
-            if [ -z "$NET" ]; then
-              echo 'ERRO: não foi encontrada rede Docker user-defined ligada ao proxy sgr-proxy-prod.'
-              docker inspect -f '{{range $name, $cfg := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$PROXY_CONTAINER" 2>/dev/null || true
-              docker network ls || true
-              exit 1
-            fi
-            echo "Rede do proxy: $NET"
-
-            echo 'Preservando imagem anterior para rollback...'
             OLD_IMAGE=$(docker inspect -f '{{.Image}}' "$CONTAINER" 2>/dev/null || true)
-            if [ -n "$OLD_IMAGE" ]; then
-              docker tag "$OLD_IMAGE" "$IMAGE_ROLLBACK" || true
-            fi
+            if [ -n "$OLD_IMAGE" ]; then docker tag "$OLD_IMAGE" "$IMAGE_ROLLBACK" || true; fi
 
-            echo 'Construindo nova imagem...'
             docker build -t "$IMAGE_NEW" .
 
-            echo 'Preparando banco isolado do candidato...'
             rm -rf "$CANDIDATE_STORAGE"
             mkdir -p "$CANDIDATE_STORAGE/logs" "$CANDIDATE_STORAGE/backups" "$CANDIDATE_STORAGE/rate-limit"
             if [ -f "$STORAGE_DIR/database.sqlite" ]; then
@@ -138,108 +102,54 @@ jobs:
             chown -R 33:33 "$CANDIDATE_STORAGE" || true
             chmod -R 775 "$CANDIDATE_STORAGE"
 
-            echo 'Subindo candidato sem alterar produção nem banco real...'
             docker rm -f "$CANDIDATE" >/dev/null 2>&1 || true
-            docker run -d \
-              --name "$CANDIDATE" \
-              --network "$NET" \
-              -v "$CANDIDATE_STORAGE:/var/www/html/showdepremios/storage" \
-              "$IMAGE_NEW"
+            docker run -d --name "$CANDIDATE" --network "$NETWORK"               -v "$CANDIDATE_STORAGE:/var/www/html/showdepremios/storage" "$IMAGE_NEW"
 
             sleep 4
-            echo 'Validando migrations no banco isolado...'
-            if ! docker exec "$CANDIDATE" php bin/migrate.php; then
-              echo 'Migration falhou no candidato. Produção permanece intacta.'
-              docker logs --tail 120 "$CANDIDATE" || true
-              docker rm -f "$CANDIDATE" || true
-              rm -rf "$CANDIDATE_STORAGE"
-              exit 1
-            fi
-
-            echo 'Validando health-check do candidato...'
-            if ! docker exec "$CANDIDATE" php -r '$r=@file_get_contents("http://127.0.0.1/api/ping"); if ($r===false) { exit(1); }'; then
-              echo 'Candidato não respondeu em /api/ping. Produção permanece intacta.'
-              docker logs --tail 120 "$CANDIDATE" || true
-              docker rm -f "$CANDIDATE" || true
-              rm -rf "$CANDIDATE_STORAGE"
-              exit 1
-            fi
-            docker rm -f "$CANDIDATE" || true
+            docker exec "$CANDIDATE" php bin/migrate.php
+            docker exec "$CANDIDATE" php -r '$r=@file_get_contents("http://127.0.0.1/api/ping"); if ($r===false) exit(1);'
+            docker rm -f "$CANDIDATE"
             rm -rf "$CANDIDATE_STORAGE"
 
-            echo 'Criando backup pré-migration da base real...'
             if [ -f "$STORAGE_DIR/database.sqlite" ]; then
               DB_BACKUP="$STORAGE_DIR/backups/predeploy-$(date +%Y%m%d-%H%M%S).sqlite"
               cp -p "$STORAGE_DIR/database.sqlite" "$DB_BACKUP"
-              echo "Backup criado: $DB_BACKUP"
             fi
 
-            echo 'Aplicando migration real com janela mínima de escrita...'
             if docker inspect "$CONTAINER" >/dev/null 2>&1; then
               docker stop "$CONTAINER" >/dev/null 2>&1 || true
             fi
 
-            if ! docker run --rm \
-              --network "$NET" \
-              -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
-              "$IMAGE_NEW" php bin/migrate.php; then
-              echo 'Migration real falhou. Restaurando banco e produção anterior.'
+            if ! docker run --rm --network "$NETWORK"               -v "$STORAGE_DIR:/var/www/html/showdepremios/storage"               "$IMAGE_NEW" php bin/migrate.php; then
               if [ -n "$DB_BACKUP" ] && [ -f "$DB_BACKUP" ]; then
                 cp -p "$DB_BACKUP" "$STORAGE_DIR/database.sqlite"
                 chown 33:33 "$STORAGE_DIR/database.sqlite" || true
               fi
               docker start "$CONTAINER" >/dev/null 2>&1 || true
-              docker exec "$PROXY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile || true
               exit 1
             fi
 
-            echo 'Promovendo nova imagem...'
             docker tag "$IMAGE_NEW" "$IMAGE_LATEST"
-            docker rm "$CONTAINER" >/dev/null 2>&1 || true
+            docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+            docker run -d               --name "$CONTAINER"               --restart always               --network "$NETWORK"               -p "$BIND:80"               -v "$STORAGE_DIR:/var/www/html/showdepremios/storage"               "$IMAGE_LATEST"
 
-            docker run -d \
-              --name "$CONTAINER" \
-              --restart always \
-              --network "$NET" \
-              --network-alias showdepremios \
-              -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
-              "$IMAGE_LATEST"
-
-            echo 'Recarregando Caddy...'
-            docker exec "$PROXY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile || true
-
-            echo 'Validando health-check público...'
             ONLINE=0
-            for i in $(seq 1 12); do
-              if curl --fail --silent --show-error --location --max-time 15 https://showdepremios.mskpoeira.com.br/api/ping >/dev/null; then
+            for i in $(seq 1 20); do
+              if docker exec "$CONTAINER" php -r '$r=@file_get_contents("http://127.0.0.1/api/ping"); if ($r===false) exit(1);'; then
                 ONLINE=1
                 break
               fi
-              echo "Tentativa $i/12..."
-              sleep 4
+              sleep 2
             done
 
             if [ "$ONLINE" -eq 1 ]; then
-              echo 'SHOW DE PRÊMIOS ONLINE E MIGRADO.'
               docker image rm "$IMAGE_ROLLBACK" >/dev/null 2>&1 || true
+              echo "SHOW_DE_PREMIOS_RUNTIME=OK"
               exit 0
             fi
 
-            echo 'Nova versão não respondeu externamente. Iniciando rollback da aplicação...'
-            docker logs --tail 150 "$CONTAINER" || true
-            docker rm -f "$CONTAINER" || true
-
+            docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
             if docker image inspect "$IMAGE_ROLLBACK" >/dev/null 2>&1; then
-              docker run -d \
-                --name "$CONTAINER" \
-                --restart always \
-                --network "$NET" \
-                --network-alias showdepremios \
-                -v "$STORAGE_DIR:/var/www/html/showdepremios/storage" \
-                "$IMAGE_ROLLBACK"
-              docker exec "$PROXY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile || true
-              echo 'Rollback da aplicação executado. O backup pré-deploy permanece preservado.'
-            else
-              echo 'Não existe imagem anterior disponível para rollback.'
+              docker run -d                 --name "$CONTAINER"                 --restart always                 --network "$NETWORK"                 -p "$BIND:80"                 -v "$STORAGE_DIR:/var/www/html/showdepremios/storage"                 "$IMAGE_ROLLBACK"
             fi
             exit 1
